@@ -131,7 +131,20 @@ def static_loader(
     dataloaders = {}
     keys = [tier] if tier else ["train", "validation", "test"]
     tier_array = dat.trial_info.tiers if file_tree else dat.tiers
-    image_id_array = dat.trial_info.frame_image_id if file_tree else dat.info.frame_image_id
+
+    dat_info = dat.info if not file_tree else dat.trial_info
+    if 'image_id' in dir(dat_info):
+        frame_image_id = dat_info.image_id
+    elif 'colorframeprojector_image_id' in dir(dat_info):
+        frame_image_id = dat_info.colorframeprojector_image_id
+    elif 'frame_image_id' in dir(dat_info):
+        frame_image_id = dat_info.frame_image_id
+    else:
+        raise ValueError(
+            "'image_id' 'colorframeprojector_image_id', or 'frame_image_id' have to present in the dataset under dat.info "
+            "in order to load get the oracle repeats.")
+
+    image_id_array = frame_image_id
     for tier in keys:
         # sample images
         if tier == "train" and image_ids is not None:
