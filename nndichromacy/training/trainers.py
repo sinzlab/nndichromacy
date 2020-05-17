@@ -14,7 +14,7 @@ from ..utility import measures
 from ..utility.measures import get_correlations, get_poisson_loss
 
 
-def nnvision_trainer(model, dataloaders, seed, avg_loss=False, scale_loss=True,  # trainer args
+def standart_trainer(model, dataloaders, seed, avg_loss=False, scale_loss=True,  # trainer args
                                 loss_function='PoissonLoss', stop_function='get_correlations',
                                 loss_accum_batch_n=None, device='cuda', verbose=True,
                                 interval=1, patience=5, epoch=0, lr_init=0.005,  # early stopping args

@@ -1,1 +1,1 @@
-from .trainers import nnvision_trainer
+from .trainers import standart_trainer
