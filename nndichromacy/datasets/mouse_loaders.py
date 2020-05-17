@@ -14,8 +14,8 @@ from dataport.bcm.static import fetch_non_existing_data
 
 @fetch_non_existing_data
 def static_loader(
-    path,
-    batch_size,
+    path=None,
+    batch_size=None,
     areas=None,
     layers=None,
     tier=None,
@@ -33,8 +33,10 @@ def static_loader(
     include_behavior=False,
     select_input_channel=None,
     file_tree=True,
+    image_condition=None,
     return_test_sampler=False,
     oracle_condition=None,
+
 ):
     """
     returns a single data loader
@@ -58,6 +60,7 @@ def static_loader(
         include_behavior (bool, optional): whether to include behavioral data
         select_input_channel (int, optional): Only for color images. Select a color channel
         file_tree (bool, optional): whether to use the file tree dataset format. If False, equivalent to the HDF5 format
+        image_condition (str, optional): selection of images based on the image condition
         return_test_sampler (bool, optional): whether to return only the test loader with repeat-batches
         oracle_condition (list, optional): Only relevant if return_test_sampler=True. Class indices for the sampler
 
@@ -66,6 +69,7 @@ def static_loader(
         if get_key is True it returns the data_key (as the first output) followed by the dataloder dictionary.
 
     """
+
     assert any([image_ids is None, all([image_n is None, image_base_seed is None])]), \
         "image_ids can not be set at the same time with anhy other image selection criteria"
     assert any([neuron_ids is None, all([neuron_n is None, neuron_base_seed is None, areas is None, layers is None, exclude_neuron_n==0])]), \
@@ -135,27 +139,41 @@ def static_loader(
     dat_info = dat.info if not file_tree else dat.trial_info
     if 'image_id' in dir(dat_info):
         frame_image_id = dat_info.image_id
+        image_class = dat_info.image_class
     elif 'colorframeprojector_image_id' in dir(dat_info):
         frame_image_id = dat_info.colorframeprojector_image_id
+        image_class = dat_info.colorframeprojector_image_class
     elif 'frame_image_id' in dir(dat_info):
         frame_image_id = dat_info.frame_image_id
+        image_class = dat_info.image_class
     else:
         raise ValueError(
             "'image_id' 'colorframeprojector_image_id', or 'frame_image_id' have to present in the dataset under dat.info "
             "in order to load get the oracle repeats.")
+    image_condition_filter = dat.trial_info.image_class == image_condition
+    if image_ids is None and image_condition is not None:
+        pass
+        # image_ids = frame_image_id[image_condition_filter]
+        # print(len(image_ids))
 
     image_id_array = frame_image_id
     for tier in keys:
         # sample images
-        if tier == "train" and image_ids is not None:
+        if tier == "train" and image_ids is not None and image_condition is None:
+            print("wrong")
             subset_idx = [np.where(image_id_array == image_id)[0][0] for image_id in image_ids]
             assert sum(tier_array[subset_idx] != "train") == 0, "image_ids contain validation or test images"
-        elif tier == "train" and image_n is not None:
+        elif tier == "train" and image_n is not None and image_condition is None:
             random_state = np.random.get_state()
             if image_base_seed is not None:
                 np.random.seed(image_base_seed * image_n) #avoid nesting by making seed dependent on number of images
             subset_idx = np.random.choice(np.where(tier_array == 'train')[0], size=image_n, replace=False)
             np.random.set_state(random_state)
+        elif image_condition is not None and image_ids is None:
+            subset_idx = np.where(np.logical_and(image_condition_filter, tier_array == tier))[0]
+            #image_ids = frame_image_id[np.logical_and(image_condition_filter, tier_array == tier)]
+            #subset_idx = [np.where(image_id_array == image_id)[0][0] for image_id in image_ids]
+            assert sum(tier_array[subset_idx] != tier) == 0, "image_ids contain validation or test images"
         else:
             subset_idx = np.where(tier_array == tier)[0]
 
@@ -187,6 +205,7 @@ def static_loaders(
     exclude="images",
     select_input_channel=None,
     file_tree=True,
+    image_condition=None,
 ):
     """
     Returns a dictionary of dataloaders (i.e., trainloaders, valloaders, and testloaders) for >= 1 dataset(s).
@@ -245,6 +264,7 @@ def static_loaders(
             exclude=exclude,
             select_input_channel=select_input_channel,
             file_tree=file_tree,
+            image_condition=image_condition
         )
         for k in dls:
             dls[k][data_key] = loaders[k]
