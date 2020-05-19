@@ -11,9 +11,10 @@ from mlutils.data.samplers import RepeatsBatchSampler
 
 def get_oracle_dataloader(dat,
                           toy_data=False,
-                          oracle_condition=None,
+                          image_condition=None,
                           verbose=False,
-                          file_tree=False):
+                          file_tree=False,
+                          data_key=None):
 
     if toy_data:
         condition_hashes = dat.info.condition_hash
@@ -37,15 +38,17 @@ def get_oracle_dataloader(dat,
     classes, class_idx = np.unique(image_class, return_inverse=True)
     identifiers = condition_hashes + class_idx * max_idx
     dat_tiers = dat.tiers if not file_tree else dat.trial_info.tiers
-    class_idx = image_class if isinstance(oracle_condition, str) else class_idx
+    class_idx = image_class if isinstance(image_condition, str) else class_idx
 
-    sampling_condition = np.where(dat_tiers == 'test')[0] if oracle_condition is None else \
-        np.where((dat_tiers == 'test') & (class_idx == oracle_condition))[0]
-    if (oracle_condition is not None) and verbose:
-        print("Created Testloader for image class {}".format(classes[oracle_condition]))
+    sampling_condition = np.where(dat_tiers == 'test')[0] if image_condition is None else \
+        np.where((dat_tiers == 'test') & (class_idx == image_condition))[0]
+    if (image_condition is not None) and verbose:
+        print("Created Testloader for image class {}".format(classes[image_condition]))
 
     sampler = RepeatsBatchSampler(identifiers, sampling_condition)
-    return DataLoader(dat, batch_sampler=sampler)
+    dataloaders = {}
+    dataloaders[data_key] = DataLoader(dat, batch_sampler=sampler)
+    return dataloaders
 
 
 def get_validation_split(n_images, train_frac, seed):
