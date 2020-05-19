@@ -8,6 +8,8 @@ from nnfabrik.utility.dj_helpers import CustomSchema
 import os
 import pickle
 from ..utility.dj_helpers import get_default_args
+from ..datasets.mouse_loaders import static_loader
+import featurevis
 
 schema = CustomSchema(dj.config.get('schema_name', 'nnfabrik_core'))
 
@@ -46,46 +48,49 @@ class TrainedModel(TrainedModelBase):
     data_info_table = DataInfo
 
 
-class ScoringBaseNeuronType(ScoringBase):
+class ScoringTable(ScoringBase):
     """
-    A class that modifies the the scoring template from nnfabrik to reflect the changed primary attributes of the Units
-    table.
+    Overwrites the nnfabriks scoring template, to make it handle mouse repeat-dataloaders.
     """
-    def insert_unit_measures(self, key, unit_measures_dict):
-        key = key.copy()
-        for data_key, unit_scores in unit_measures_dict.items():
-            for unit_index, unit_score in enumerate(unit_scores):
-                if "unit_id" in key: key.pop("unit_id")
-                if "data_key" in key: key.pop("data_key")
-                if "unit_type" in key: key.pop("unit_type")
-                neuron_key = dict(unit_index=unit_index, data_key=data_key)
-                unit_id = ((self.unit_table & key) & neuron_key).fetch1("unit_id")
-                unit_type = ((self.unit_table & key) & neuron_key).fetch1("unit_type")
-                key["unit_id"] = unit_id
-                key["unit_type"] = unit_type
-                key["unit_{}".format(self.measure_attribute)] = unit_score
-                key["data_key"] = data_key
-                self.Units.insert1(key, ignore_extra_fields=True)
+    dataloader_function_kwargs = {}
 
+    def get_repeats_dataloaders(self, key=None, **kwargs):
+        if key is None:
+            key = self.fetch1('KEY')
 
-class MeasuresBaseNeuronType(MeasuresBase):
-    """
-    A class that modifies the the scoring template from nnfabrik to reflect the changed primary attributes of the Units
-    table.
-    """
-    def insert_unit_measures(self, key, unit_measures_dict):
-        key = key.copy()
-        for data_key, unit_scores in unit_measures_dict.items():
-            for unit_index, unit_score in enumerate(unit_scores):
-                if "unit_id" in key: key.pop("unit_id")
-                if "data_key" in key: key.pop("data_key")
-                if "unit_type" in key: key.pop("unit_type")
-                neuron_key = dict(unit_index=unit_index, data_key=data_key)
-                unit_id = ((self.unit_table & key) & neuron_key).fetch1("unit_id")
-                unit_type = ((self.unit_table & key) & neuron_key).fetch1("unit_type")
-                key["unit_id"] = unit_id
-                key["unit_type"] = unit_type
-                key["unit_{}".format(self.measure_attribute)] = unit_score
-                key["data_key"] = data_key
-                self.Units.insert1(key, ignore_extra_fields=True)
+        dataset_config = (self.dataset_table()&key).fetch1("dataset_config")
+        dataloaders = static_loader(path=dataset_config.pop("paths")[0],
+                                    return_test_sampler=True,
+                                    **dataset_config,
+                                    **kwargs)
+        return dataloaders
 
+    def get_model(self, key=None):
+        if self.model_cache is None:
+            model = self.trainedmodel_table().load_model(key=key,
+                                                         include_state_dict=True,
+                                                         include_dataloader=False)
+        else:
+            model = self.model_cache.load(key=key,
+                                          include_state_dict=True,
+                                          include_dataloader=False)
+        model = model if isinstance(model, featurevis.integration.EnsembleModel) else model[1]
+        model.eval()
+        model.to("cuda")
+        return model if isinstance(model, featurevis.integration.EnsembleModel) else model[1]
+
+    def make(self, key):
+
+        dataloaders = self.get_repeats_dataloaders(key=key, **self.dataloader_function_kwargs) if self.measure_dataset == 'test' else self.get_dataloaders(
+            key=key)
+        model = self.get_model(key=key)
+        unit_measures_dict = self.measure_function(model=model,
+                                                 dataloaders=dataloaders,
+                                                 device='cuda',
+                                                 as_dict=True,
+                                                 per_neuron=True,
+                                                 **self.function_kwargs)
+
+        key[self.measure_attribute] = self.get_avg_of_unit_dict(unit_measures_dict)
+        self.insert1(key, ignore_extra_fields=True)
+        self.insert_unit_measures(key=key, unit_measures_dict=unit_measures_dict)
