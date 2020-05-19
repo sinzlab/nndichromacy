@@ -35,8 +35,6 @@ def static_loader(
     file_tree=True,
     image_condition=None,
     return_test_sampler=False,
-    oracle_condition=None,
-
 ):
     """
     returns a single data loader
@@ -62,7 +60,6 @@ def static_loader(
         file_tree (bool, optional): whether to use the file tree dataset format. If False, equivalent to the HDF5 format
         image_condition (str, optional): selection of images based on the image condition
         return_test_sampler (bool, optional): whether to return only the test loader with repeat-batches
-        oracle_condition (list, optional): Only relevant if return_test_sampler=True. Class indices for the sampler
 
     Returns:
         if get_key is False returns a dictionary of dataloaders for one dataset, where the keys are 'train', 'validation', and 'test'.
@@ -125,9 +122,12 @@ def static_loader(
 
     dat.transforms.extend(more_transforms)
 
+    # create the data_key for a specific data path
+    data_key = path.split("static")[-1].split(".")[0].replace("preproc", "").replace("_nobehavior", "")
+
     if return_test_sampler:
         dataloader = get_oracle_dataloader(
-            dat, oracle_condition=oracle_condition, file_tree=file_tree
+            dat, image_condition=image_condition, file_tree=file_tree, data_key=data_key
         )
         return dataloader
 
@@ -150,7 +150,7 @@ def static_loader(
         raise ValueError(
             "'image_id' 'colorframeprojector_image_id', or 'frame_image_id' have to present in the dataset under dat.info "
             "in order to load get the oracle repeats.")
-    image_condition_filter = dat.trial_info.image_class == image_condition
+    image_condition_filter = image_class == image_condition
     if image_ids is None and image_condition is not None:
         pass
         # image_ids = frame_image_id[image_condition_filter]
@@ -180,8 +180,6 @@ def static_loader(
         sampler = SubsetRandomSampler(subset_idx) if tier == "train" else SubsetSequentialSampler(subset_idx)
         dataloaders[tier] = DataLoader(dat, sampler=sampler, batch_size=batch_size)
 
-    # create the data_key for a specific data path
-    data_key = path.split("static")[-1].split(".")[0].replace("preproc", "").replace("_nobehavior", "")
     return (data_key, dataloaders) if get_key else dataloaders
 
 
