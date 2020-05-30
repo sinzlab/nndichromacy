@@ -77,7 +77,7 @@ class ScoringTable(ScoringBase):
         model = model if isinstance(model, featurevis.integration.EnsembleModel) else model[1]
         model.eval()
         model.to("cuda")
-        return model if isinstance(model, featurevis.integration.EnsembleModel) else model[1]
+        return model
 
     def make(self, key):
 
