@@ -367,6 +367,3 @@ def get_targets(model, dataloaders, device='cpu', as_dict=True, per_neuron=True,
     if not as_dict:
         responses = [v for v in responses.values()]
     return responses
-
-def norm(x):
-    return lambda x: np.sqrt((x**2).sum())
