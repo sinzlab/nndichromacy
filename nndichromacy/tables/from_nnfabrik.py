@@ -94,3 +94,23 @@ class ScoringTable(ScoringBase):
         key[self.measure_attribute] = self.get_avg_of_unit_dict(unit_measures_dict)
         self.insert1(key, ignore_extra_fields=True)
         self.insert_unit_measures(key=key, unit_measures_dict=unit_measures_dict)
+
+
+class SummaryScoringTable(ScoringTable):
+    """
+    A template scoring table with the same logic as ScoringBase, but for scores that do not have unit scores, but
+    an overall score per model only.
+    """
+    unit_table = None
+    Units = None
+
+    def make(self, key):
+
+        dataloaders = self.get_repeats_dataloaders(key=key) if self.measure_dataset == 'test' else self.get_dataloaders(
+            key=key)
+        model = self.get_model(key=key)
+        key[self.measure_attribute] = self.measure_function(model=model,
+                                                            dataloaders=dataloaders,
+                                                            device='cuda',
+                                                            **self.function_kwargs)
+        self.insert1(key, ignore_extra_fields=True)
