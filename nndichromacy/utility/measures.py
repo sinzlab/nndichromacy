@@ -171,7 +171,7 @@ def compute_oracle_corr_corrected(repeated_outputs):
             var_mean.append(repeat.mean(axis=0))
         var_noise = np.mean(np.array(var_noise), axis=0)
         var_mean = np.var(np.array(var_mean), axis=0)
-    return var_mean/np.sqrt(var_mean * (var_mean + var_noise))
+    return var_mean / np.sqrt(var_mean * (var_mean + var_noise))
 
 
 def compute_oracle_corr(repeated_outputs):
@@ -367,3 +367,6 @@ def get_targets(model, dataloaders, device='cpu', as_dict=True, per_neuron=True,
     if not as_dict:
         responses = [v for v in responses.values()]
     return responses
+
+def norm(x):
+    return lambda x: np.sqrt((x**2).sum())
