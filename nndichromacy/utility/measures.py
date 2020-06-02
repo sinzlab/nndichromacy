@@ -5,9 +5,13 @@ from mlutils.measures import corr
 from mlutils.training import eval_state, device_state
 import types
 import contextlib
+import featurevis
+from ..mei.helpers import is_ensemble
+import warnings
+from .measure_helpers import get_subset_of_repeats
 
 
-def model_predictions_repeats(model, dataloader, data_key, device='cpu', broadcast_to_target=False):
+def model_predictions_repeats(model, dataloader, data_key, device='cuda', broadcast_to_target=False):
     """
     Computes model predictions for a dataloader that yields batches with identical inputs along the first dimension.
     Unique inputs will be forwarded only once through the model
@@ -18,7 +22,7 @@ def model_predictions_repeats(model, dataloader, data_key, device='cpu', broadca
     """
     
     target = []
-    unique_images = torch.empty(0)
+    unique_images = torch.empty(0).cuda()
     for images, responses in dataloader:
         if len(images.shape) == 5:
             images = images.squeeze(dim=0)
@@ -29,8 +33,8 @@ def model_predictions_repeats(model, dataloader, data_key, device='cpu', broadca
         target.append(responses.detach().cpu().numpy())
     
     # Forward unique images once:
-    with eval_state(model) if not isinstance(model, types.FunctionType) else contextlib.nullcontext():
-        with device_state(model, device) if not isinstance(model, types.FunctionType) else contextlib.nullcontext():
+    with eval_state(model) if not is_ensemble(model) else contextlib.nullcontext():
+        with device_state(model, device) if not is_ensemble(model) else contextlib.nullcontext():
             output = model(unique_images.to(device), data_key=data_key).detach().cpu()
     
     output = output.numpy()   
@@ -55,7 +59,7 @@ def model_predictions(model, dataloader, data_key, device='cpu'):
             images = images.squeeze(dim=0)
             responses = responses.squeeze(dim=0)
         with torch.no_grad():
-            with device_state(model, device) if not isinstance(model, types.FunctionType) else contextlib.nullcontext():
+            with device_state(model, device) if not is_ensemble(model) else contextlib.nullcontext():
                 output = torch.cat((output, (model(images.to(device), data_key=data_key).detach().cpu())), dim=0)
             target = torch.cat((target, responses.detach().cpu()), dim=0)
 
@@ -90,7 +94,7 @@ def get_avg_correlations(model, dataloaders, device='cpu', as_dict=False, per_ne
 
 def get_correlations(model, dataloaders, device='cpu', as_dict=False, per_neuron=True, **kwargs):
     correlations = {}
-    with eval_state(model) if not isinstance(model, types.FunctionType) else contextlib.nullcontext():
+    with eval_state(model) if not is_ensemble(model) else contextlib.nullcontext():
         for k, v in dataloaders.items():
             target, output = model_predictions(dataloader=v, model=model, data_key=k, device=device)
             correlations[k] = corr(target, output, axis=0)
@@ -106,7 +110,7 @@ def get_correlations(model, dataloaders, device='cpu', as_dict=False, per_neuron
 
 def get_poisson_loss(model, dataloaders, device='cpu', as_dict=False, avg=False, per_neuron=True, eps=1e-12):
     poisson_loss = {}
-    with eval_state(model) if not isinstance(model, types.FunctionType) else contextlib.nullcontext():
+    with eval_state(model) if not is_ensemble(model) else contextlib.nullcontext():
         for k, v in dataloaders.items():
             target, output = model_predictions(dataloader=v, model=model, data_key=k, device=device)
             loss = output - target * np.log(output + eps)
@@ -208,7 +212,7 @@ def get_fraction_oracles(model, dataloaders, device='cpu', corrected=False):
         oracles = get_oracles(dataloaders=dataloaders, as_dict=False, per_neuron=True)
     test_correlation = get_correlations(model=model, dataloaders=dataloaders, device=device, as_dict=False, per_neuron=True)
     oracle_performance, _, _, _ = np.linalg.lstsq(np.hstack(oracles)[:, np.newaxis], np.hstack(test_correlation))
-    return oracle_performance
+    return oracle_performance[0]
 
 
 def get_explainable_var(dataloaders, as_dict=False, per_neuron=True):
@@ -251,7 +255,7 @@ def get_FEV(model, dataloaders, device='cpu', as_dict=False, per_neuron=True, th
     """
     dataloaders = dataloaders["test"] if "test" in dataloaders else dataloaders
     FEV = {}
-    with eval_state(model) if not isinstance(model, types.FunctionType) else contextlib.nullcontext():
+    with eval_state(model) if not is_ensemble(model) else contextlib.nullcontext():
         for data_key, dataloader in dataloaders.items():
             targets, outputs = model_predictions_repeats(model=model,
                                                          dataloader=dataloader,
