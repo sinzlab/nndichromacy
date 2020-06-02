@@ -45,7 +45,7 @@ class TestCorrelationEnsemble(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
     unit_table = MEISelector
-    measure_function = staticmethod(get_avg_correlations)
+    measure_function = staticmethod(get_correlations)
     measure_dataset = "test"
     measure_attribute = "avg_correlation"
     data_cache = DataCache
