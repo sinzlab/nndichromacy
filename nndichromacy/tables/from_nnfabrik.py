@@ -59,10 +59,10 @@ class ScoringTable(ScoringBase):
             key = self.fetch1('KEY')
 
         dataset_config = (self.dataset_table()&key).fetch1("dataset_config")
+        dataset_config.update(kwargs)
         dataloaders = static_loader(path=dataset_config.pop("paths")[0],
                                     return_test_sampler=True,
-                                    **dataset_config,
-                                    **kwargs)
+                                    **dataset_config)
         return dataloaders
 
     def get_model(self, key=None):
@@ -74,6 +74,7 @@ class ScoringTable(ScoringBase):
             model = self.model_cache.load(key=key,
                                           include_state_dict=True,
                                           include_dataloader=False)
+
         model = model if isinstance(model, featurevis.integration.EnsembleModel) else model[1]
         model.eval()
         model.to("cuda")
@@ -114,3 +115,22 @@ class SummaryScoringTable(ScoringTable):
                                                             device='cuda',
                                                             **self.function_kwargs)
         self.insert1(key, ignore_extra_fields=True)
+
+
+class MeasuresTable(MeasuresBase, ScoringTable):
+    """
+    Overwrites the nnfabriks scoring template, to make it handle mouse repeat-dataloaders.
+    """
+    dataloader_function_kwargs = {}
+
+    def make(self, key):
+
+        dataloaders = ScoringTable.get_repeats_dataloaders(self, key=key) if self.measure_dataset == 'test' else self.get_dataloaders(key=key)
+        unit_measures_dict = self.measure_function(dataloaders=dataloaders,
+                                                   as_dict=True,
+                                                   per_neuron=True,
+                                                   **self.function_kwargs)
+
+        key[self.measure_attribute] = self.get_avg_of_unit_dict(unit_measures_dict)
+        self.insert1(key, ignore_extra_fields=True)
+        self.insert_unit_measures(key=key, unit_measures_dict=unit_measures_dict)
