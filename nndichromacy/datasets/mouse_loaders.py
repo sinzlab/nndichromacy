@@ -233,7 +233,8 @@ def static_loaders(
     Returns:
         dict: dictionary of dictionaries where the first level keys are 'train', 'validation', and 'test', and second level keys are data_keys.
     """
-    set_random_seed(seed)
+    if seed is not None:
+        set_random_seed(seed)
     dls = OrderedDict({})
     keys = [tier] if tier else ["train", "validation", "test"]
     for key in keys:
@@ -318,7 +319,9 @@ def static_shared_loaders(
     Returns:
         dict: dictionary of dictionaries where the first level keys are 'train', 'validation', and 'test', and second level keys are data_keys.
     """
-    set_random_seed(seed)
+    if seed is not None:
+        set_random_seed(seed)
+
     assert (
         len(paths) != 1
     ), "Only one dataset was specified in 'paths'. When using the 'static_shared_loaders', more than one dataset has to be passed."
@@ -326,6 +329,7 @@ def static_shared_loaders(
         "multi_match_ids can not be set at the same time with any other multi_match selection criteria"
     assert any([exclude_multi_match_n==0, multi_match_base_seed is not None]),  \
         "multi_match_base_seed must be set when exclude_multi_match_n is not 0"
+
     # Collect overlapping multi matches
     multi_unit_ids, per_data_set_ids, given_neuron_ids = [], [], []
     match_set = None
