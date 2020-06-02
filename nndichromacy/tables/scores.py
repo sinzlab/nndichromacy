@@ -6,12 +6,12 @@ import os
 from nnfabrik.main import Model, Dataset, Trainer, Seed, Fabrikant
 from nnfabrik.utility.dj_helpers import gitlog, make_hash
 import numpy as np
-from ..utility.measures import get_oracles, get_repeats, get_FEV, get_explainable_var, get_correlations, get_poisson_loss, get_avg_correlations, get_predictions, get_targets
-from .from_nnfabrik import TrainedModel, ScoringTable
+from ..utility.measures import get_oracles, get_repeats, get_FEV, get_explainable_var, get_correlations, \
+    get_poisson_loss, get_avg_correlations, get_predictions, get_targets, get_fraction_oracles
+from .from_nnfabrik import TrainedModel, ScoringTable, SummaryScoringTable
 from .from_mei import MEISelector, TrainedEnsembleModel
 from .utility import DataCache, TrainedModelCache, EnsembleModelCache
 from nnfabrik.utility.dj_helpers import CustomSchema
-from nnfabrik.template import ScoringBase, SummaryScoringBase
 
 schema = CustomSchema(dj.config.get('schema_name', 'nnfabrik_core'))
 
@@ -50,3 +50,39 @@ class TestCorrelationEnsemble(ScoringTable):
     measure_attribute = "avg_correlation"
     data_cache = DataCache
     model_cache = EnsembleModelCache
+
+
+
+@schema
+class TestCorrelationEnsemble(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_correlation"
+    data_cache = None
+    model_cache = None
+
+
+##### ============ Summary Scores ============ #####
+
+@schema
+class FractionOracleJackknife(SummaryScoringTable):
+    trainedmodel_table = TrainedModel
+    measure_function = staticmethod(get_fraction_oracles)
+    measure_dataset = "test"
+    measure_attribute = "fraction_oracle_jackknife"
+    data_cache = None
+    model_cache = None
+
+
+
+@schema
+class FractionOracleJackknifeEnsemble(SummaryScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    measure_function = staticmethod(get_fraction_oracles)
+    measure_dataset = "test"
+    measure_attribute = "fraction_oracle_jackknife"
+    data_cache = None
+    model_cache = None
