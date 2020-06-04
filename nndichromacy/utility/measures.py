@@ -371,3 +371,43 @@ def get_targets(model, dataloaders, device='cpu', as_dict=True, per_neuron=True,
     if not as_dict:
         responses = [v for v in responses.values()]
     return responses
+
+
+def get_avg_firing(dataloaders, as_dict=False, per_neuron=True):
+    """
+    Returns average firing rate across the whole dataset
+    """
+
+    avg_firing = {}
+    for k, dataloader in dataloaders.items():
+        target = torch.empty(0)
+        for images, responses in dataloader:
+            if len(images.shape) == 5:
+                responses = responses.squeeze(dim=0)
+            target = torch.cat((target, responses.detach().cpu()), dim=0)
+        avg_firing[k] = target.mean(0).numpy()
+
+    if not as_dict:
+        avg_firing = np.hstack([v for v in avg_firing.values()]) if per_neuron else np.mean(
+            np.hstack([v for v in avg_firing.values()]))
+    return avg_firing
+
+
+def get_fano_factor(dataloaders, as_dict=False, per_neuron=True):
+    """
+    Returns average firing rate across the whole dataset
+    """
+
+    fano_factor = {}
+    for k, dataloader in dataloaders.items():
+        target = torch.empty(0)
+        for images, responses in dataloader:
+            if len(images.shape) == 5:
+                responses = responses.squeeze(dim=0)
+            target = torch.cat((target, responses.detach().cpu()), dim=0)
+        fano_factor[k] = (target.var(0) / target.mean(0)).numpy()
+
+    if not as_dict:
+        fano_factor = np.hstack([v for v in fano_factor.values()]) if per_neuron else np.mean(
+            np.hstack([v for v in fano_factor.values()]))
+    return fano_factor
