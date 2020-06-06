@@ -107,7 +107,7 @@ class SummaryScoringTable(ScoringTable):
 
     def make(self, key):
 
-        dataloaders = self.get_repeats_dataloaders(key=key) if self.measure_dataset == 'test' else self.get_dataloaders(
+        dataloaders = self.get_repeats_dataloaders(key=key, **self.dataloader_function_kwargs) if self.measure_dataset == 'test' else self.get_dataloaders(
             key=key)
         model = self.get_model(key=key)
         key[self.measure_attribute] = self.measure_function(model=model,
@@ -125,7 +125,7 @@ class MeasuresTable(MeasuresBase, ScoringTable):
 
     def make(self, key):
 
-        dataloaders = ScoringTable.get_repeats_dataloaders(self, key=key) if self.measure_dataset == 'test' else self.get_dataloaders(key=key)
+        dataloaders = ScoringTable.get_repeats_dataloaders(self, key=key, **self.dataloader_function_kwargs) if self.measure_dataset == 'test' else self.get_dataloaders(key=key)
         unit_measures_dict = self.measure_function(dataloaders=dataloaders,
                                                    as_dict=True,
                                                    per_neuron=True,
