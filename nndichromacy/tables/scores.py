@@ -41,6 +41,30 @@ class TestCorrelation(ScoringTable):
 
 
 @schema
+class TestCorrelation_BlueTestSet(ScoringTable):
+    trainedmodel_table = TrainedModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_correlations)
+    measure_dataset = "test"
+    measure_attribute = "test_correlation_blue"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_blue_only')
+
+
+@schema
+class TestCorrelation_GreenTestSet(ScoringTable):
+    trainedmodel_table = TrainedModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_correlations)
+    measure_dataset = "test"
+    measure_attribute = "test_correlation_green"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_green_only')
+
+
+@schema
 class TestCorrelationEnsemble(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
@@ -86,3 +110,5 @@ class FractionOracleJackknifeEnsemble(SummaryScoringTable):
     measure_attribute = "fraction_oracle_jackknife"
     data_cache = None
     model_cache = None
+
+
