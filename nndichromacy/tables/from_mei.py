@@ -37,14 +37,10 @@ class MouseSelectorTemplate(dj.Computed):
     constrained_output_model = ConstrainedOutputModel
 
     def make(self, key):
-        dataset_config = (Dataset & key).fetch1("dataset_config")
-
-        path = dataset_config["paths"][0]
-        file_tree = dataset_config.get("file_tree", False)
-        dat = StaticImageSet(path, 'images', 'responses') if not file_tree else FileTreeDataset(path, 'images', 'responses')
+        dataloaders = (Dataset & key).get_dataloader()
+        data_key = list(dataloaders["train"].keys())[0]
+        dat = dataloaders["train"][data_key].dataset
         neuron_ids = dat.neurons.unit_ids
-
-        data_key = path.split('static')[-1].split('.')[0].replace('preproc', '').replace('_nobehavior','')
 
         mappings = []
         for neuron_pos, neuron_id in enumerate(neuron_ids):
