@@ -54,7 +54,7 @@ class TestCorrelationEnsemble(ScoringTable):
 
 
 @schema
-class TestCorrelationEnsemble(ScoringTable):
+class CorrelationToAvergeEnsemble(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
     unit_table = MEISelector
