@@ -65,6 +65,18 @@ class TestCorrelation_GreenTestSet(ScoringTable):
 
 
 @schema
+class TestCorrelation_DependentTestSet(ScoringTable):
+    trainedmodel_table = TrainedModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_correlations)
+    measure_dataset = "test"
+    measure_attribute = "test_correlation_dependent"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_gb_g_biased_correlated')
+
+
+@schema
 class TestCorrelationEnsemble(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
