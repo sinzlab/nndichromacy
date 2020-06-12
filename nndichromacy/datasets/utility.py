@@ -7,6 +7,13 @@ from skimage.transform import rescale
 from collections import namedtuple, Iterable
 import os
 from mlutils.data.samplers import RepeatsBatchSampler
+import datajoint as dj
+
+from dataport.bcm.static import PreprocessedMouseData
+from mlutils.data.datasets import FileTreeDataset
+from pathlib import Path
+import h5py
+from tqdm import tqdm
 
 
 def get_oracle_dataloader(dat,
@@ -237,3 +244,62 @@ def get_cached_loader(image_ids, responses, batch_size, shuffle=True, image_cach
                                                                                                             shuffle=shuffle,
                                                                                                             )
     return dataloader
+
+
+def add_h5_to_preprocessed_table(path, keys, comments):
+    """
+    Args:
+        path (str):     location of the h5 file to be added to the PreprocessedMouseData table.
+        keys (list):    list of keys with the format dict(animal_id=.., session=.., scan_idx=..)
+        comments (list): list of same length as keys, specifying the comment to be inserted into the
+                            PreprocessedMouseData table
+
+    Returns:
+        filenames (list): filename of the dataset as a zip file. Corresponds to the attribute "filename"
+                            in the PreprocessedMouseData table.
+    """
+
+    experiment = dj.create_virtual_module('experiment', 'sinzlab_houston_data')
+
+    filename_template = 'static{animal_id}-{session}-{scan_idx}-preproc0'
+    template = os.path.join(path, filename_template)
+    datasets = [(template + '.h5').format(**k)
+                for k in (experiment.Scan() & keys).fetch('KEY')]
+
+    for datafile in datasets:
+        print(datafile)
+        with h5py.File(datafile) as fid:
+            print(datafile, fid['images'].shape)
+
+    for datafile in datasets:
+        FileTreeDataset.initialize_from(datafile, include_behavior=False)
+
+    for key in (experiment.Scan() & keys).fetch('KEY'):
+        filename = (template + '/').format(**key)
+        print(filename)
+        dat = FileTreeDataset(filename, 'images', 'responses')
+        dat.add_link('responses', 'targets')
+        dat.add_link('images', 'inputs')
+        print(dat)
+
+    for key in (experiment.Scan() & keys).fetch('KEY'):
+        print(key)
+        filename = (template + '/').format(**key)
+        dat = FileTreeDataset(filename, 'images', 'responses')
+        ai, se, si, ui, x, y, z = (experiment.ScanSet.UnitInfo & key).fetch('animal_id', 'session', 'scan_idx',
+                                                                            'unit_id', 'um_x', 'um_y', 'um_z')
+        p = np.c_[x, y, z]
+        dat.add_neuron_meta('cell_motor_coordinates', ai, se, si, ui, p)
+
+    for key in (experiment.Scan() & keys).proj():
+        filename = (template + '/').format(**key)
+        dat = FileTreeDataset(filename, 'images', 'responses')
+        dat.zip()
+
+    filenames = []
+    for i, key in enumerate((experiment.Scan() & keys).proj()):
+        filename = (template + '.zip').format(**key)
+        PreprocessedMouseData().fill(filename, comment=comments[i])
+        filenames.append(filename)
+
+    return filenames
