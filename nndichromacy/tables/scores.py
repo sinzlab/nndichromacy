@@ -77,6 +77,21 @@ class TestCorrelation_DependentTestSet(ScoringTable):
 
 
 @schema
+class TestCorrelation_Dependent_highMSE(ScoringTable):
+    trainedmodel_table = TrainedModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_correlations)
+    measure_dataset = "test"
+    measure_attribute = "test_correlation_dependent"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb')
+
+
+##### ============ Ensemble Scores ============ #####
+
+
+@schema
 class TestCorrelationEnsemble(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
@@ -86,7 +101,6 @@ class TestCorrelationEnsemble(ScoringTable):
     measure_attribute = "avg_correlation"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-
 
 
 @schema
@@ -99,6 +113,59 @@ class CorrelationToAvergeEnsemble(ScoringTable):
     measure_attribute = "avg_correlation"
     data_cache = None
     model_cache = None
+
+
+@schema
+class TestCorrEnsemble_BlueSet(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_correlations)
+    measure_dataset = "test"
+    measure_attribute = "test_correlation_blue"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_blue_only')
+
+
+@schema
+class TestCorrEnsemble_GreenSet(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_correlations)
+    measure_dataset = "test"
+    measure_attribute = "test_correlation_green"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_green_only')
+
+
+@schema
+class TestCorrEnsemble_DepSet(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_correlations)
+    measure_dataset = "test"
+    measure_attribute = "test_correlation_dependent"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_gb_g_biased_correlated')
+
+
+@schema
+class TestCorrEnsemble_DepSet_HighMSE(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_correlations)
+    measure_dataset = "test"
+    measure_attribute = "test_correlation_dependent"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb')
+
 
 
 ##### ============ Summary Scores ============ #####
