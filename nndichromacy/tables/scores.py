@@ -167,6 +167,57 @@ class TestCorrEnsemble_DepSet_HighMSE(ScoringTable):
     dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb')
 
 
+@schema
+class CorrToAvgEnsemble_BlueSet(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_test_correlation_blue"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_blue_only')
+
+
+@schema
+class CorrToAvgEnsemble_GreenSet(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_test_correlation_green"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_green_only')
+
+
+@schema
+class CorrToAvgEnsemble_DepSet(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_test_correlation_dependent"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_gb_g_biased_correlated')
+
+
+@schema
+class CorrToAvgEnsemble_DepSet_HighMSE(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_test_correlation_dependent"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb')
+
 
 ##### ============ Summary Scores ============ #####
 
