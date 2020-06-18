@@ -74,8 +74,6 @@ class ScoringTable(ScoringBase):
             model = self.model_cache.load(key=key,
                                           include_state_dict=True,
                                           include_dataloader=False)
-
-        model = model if isinstance(model, featurevis.integration.EnsembleModel) else model[1]
         model.eval()
         model.to("cuda")
         return model
