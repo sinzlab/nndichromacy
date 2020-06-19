@@ -9,7 +9,6 @@ import os
 import pickle
 from ..utility.dj_helpers import get_default_args
 from ..datasets.mouse_loaders import static_loader
-import featurevis
 
 schema = CustomSchema(dj.config.get('schema_name', 'nnfabrik_core'))
 
