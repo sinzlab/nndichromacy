@@ -37,8 +37,6 @@ def gradient_ascent(
     config = prepare_config(config, import_object)
     mei_shape = get_input_dimensions(dataloaders, get_dims)
     initial_guess = initial_image if initial_image is not None else get_initial_guess(1, *mei_shape[1:], ).cuda()
-    print("shape_of_initial_guess")
-    print(initial_guess.shape)
     mei, evaluations, _ = ascend(model, initial_guess, **config)
     return mei, evaluations
 
