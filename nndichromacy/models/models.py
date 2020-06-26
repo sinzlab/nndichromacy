@@ -9,9 +9,10 @@ from nnfabrik.utility.nn_helpers import get_module_output, set_random_seed, get_
 from torch import nn
 from torch.nn import functional as F
 
-from .cores import SE2dCore, TransferLearningCore
+from .cores import SE2dCore, TransferLearningCore, RotationEquivariantCore
 from .readouts import MultipleFullGaussian2d, MultiReadout, MultipleSpatialXFeatureLinear
 from .utility import unpack_data_info
+from .utility import *
 
 class MultiplePointPooled2d(MultiReadout, torch.nn.ModuleDict):
     def __init__(self, core, in_shape_dict, n_neurons_dict, pool_steps, pool_kern, bias, init_range, gamma_readout):
@@ -743,6 +744,86 @@ def se_core_spatialXfeature_readout(dataloaders, seed, hidden_channels=32, input
                                             gamma_readout=gamma_readout,
                                             normalize=normalize
                                             )
+
+    # initializing readout bias to mean response
+    if readout_bias and data_info is None:
+        for key, value in dataloaders.items():
+            _, targets = next(iter(value))
+            readout[key].bias.data = targets.mean(0)
+
+    model = Encoder(core, readout, elu_offset)
+
+    return model
+
+
+def rotation_equivariant_gauss_readout(dataloaders,
+                                       seed,
+                                       init_mu_range=0.2,
+                                       init_sigma_range=0.5,
+                                       readout_bias=True,  # readout args,
+                                       gamma_readout=4,
+                                       elu_offset=0,
+                                       data_info=None,
+                                       ):
+    """
+    Model class of a stacked2dCore (from mlutils) and a pointpooled (spatial transformer) readout
+
+    Args:
+        dataloaders: a dictionary of dataloaders, one loader per session
+            in the format {'data_key': dataloader object, .. }
+        seed: random seed
+        elu_offset: Offset for the output non-linearity [F.elu(x + self.offset)]
+
+        all other args: See Documentation of Stacked2dCore in mlutils.layers.cores and
+            PointPooled2D in mlutils.layers.readouts
+
+    Returns: An initialized model which consists of model.core and model.readout
+    """
+
+    if data_info is not None:
+        n_neurons_dict, in_shapes_dict, input_channels = unpack_data_info(data_info)
+    else:
+        if "train" in dataloaders.keys():
+            dataloaders = dataloaders["train"]
+
+        # Obtain the named tuple fields from the first entry of the first dataloader in the dictionary
+        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields
+
+        session_shape_dict = get_dims_for_loader_dict(dataloaders)
+        n_neurons_dict = {k: v[out_name][1] for k, v in session_shape_dict.items()}
+        in_shapes_dict = {k: v[in_name] for k, v in session_shape_dict.items()}
+        input_channels = [v[in_name][1] for v in session_shape_dict.values()]
+
+    core_input_channels = list(input_channels.values())[0] if isinstance(input_channels, dict) else input_channels[0]
+
+    class Encoder(nn.Module):
+
+        def __init__(self, core, readout, elu_offset):
+            super().__init__()
+            self.core = core
+            self.readout = readout
+            self.offset = elu_offset
+
+        def forward(self, x, data_key=None, **kwargs):
+            x = self.core(x)
+
+            sample = kwargs["sample"] if 'sample' in kwargs else None
+            x = self.readout(x, data_key=data_key, sample=sample)
+            return F.elu(x + self.offset) + 1
+
+        def regularizer(self, data_key):
+            return self.core.regularizer() + self.readout.regularizer(data_key=data_key)
+
+    set_random_seed(seed)
+
+    core = RotationEquivariantCore()
+
+    readout = MultipleGaussian2d(core, in_shape_dict=in_shapes_dict,
+                                 n_neurons_dict=n_neurons_dict,
+                                 init_mu_range=init_mu_range,
+                                 bias=readout_bias,
+                                 init_sigma_range=init_sigma_range,
+                                 gamma_readout=gamma_readout)
 
     # initializing readout bias to mean response
     if readout_bias and data_info is None:

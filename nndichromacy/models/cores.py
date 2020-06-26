@@ -6,6 +6,8 @@ from mlutils import regularizers
 
 from torch.nn import functional as F
 from torchvision.models import vgg16, alexnet, vgg19, vgg19_bn
+from .utility import *
+from .architectures import HermiteConv2D
 
 try:
     from ptrnets import vgg19_original, vgg19_norm
@@ -231,3 +233,45 @@ class SE2dCore(Core2d, nn.Module):
     @property
     def outchannels(self):
         return len(self.features) * self.hidden_channels
+
+
+class RotationEquivariantCore(nn.Module):
+    def __init__(self,
+                 num_rotations=8,
+                 upsampling=2,
+                 filter_size=[13, 5, 5],
+                 num_filters=[8, 16, 32]):
+
+        super(RotationEquivariantCore, self).__init__()
+        self.filter_size = filter_size
+        self.num_filters = num_filters
+        self.num_rotations = num_rotations
+
+        layers = []
+        input_features = 1
+        for i, (fs, nf) in enumerate(zip(filter_size, num_filters)):
+            layer = HermiteConv2D(
+                input_features=input_features,
+                output_features=nf,
+                filter_size=fs,
+                padding=0,
+                stride=1,
+                num_rotations=num_rotations,
+                upsampling=upsampling,
+                first_layer=(not i),
+                layer_id=i
+            )
+            layers.append(layer)
+
+            input_features = nf * num_rotations
+
+        self.layers = nn.Sequential(*layers)
+
+    def regularizer(self):
+        return 0
+
+    def forward(self, input):
+        conv = input
+        for layer in self.layers:
+            conv = layer(conv)
+        return conv
