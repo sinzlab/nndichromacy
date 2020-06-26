@@ -763,38 +763,22 @@ def rotation_equivariant_gauss_readout(dataloaders,
                                        readout_bias=True,  # readout args,
                                        gamma_readout=4,
                                        elu_offset=0,
-                                       data_info=None,
                                        ):
     """
-    Model class of a stacked2dCore (from mlutils) and a pointpooled (spatial transformer) readout
-
-    Args:
-        dataloaders: a dictionary of dataloaders, one loader per session
-            in the format {'data_key': dataloader object, .. }
-        seed: random seed
-        elu_offset: Offset for the output non-linearity [F.elu(x + self.offset)]
-
-        all other args: See Documentation of Stacked2dCore in mlutils.layers.cores and
-            PointPooled2D in mlutils.layers.readouts
-
-    Returns: An initialized model which consists of model.core and model.readout
+    A minimal implementation of the rotation equivariant core.
     """
 
-    if data_info is not None:
-        n_neurons_dict, in_shapes_dict, input_channels = unpack_data_info(data_info)
-    else:
-        if "train" in dataloaders.keys():
-            dataloaders = dataloaders["train"]
 
-        # Obtain the named tuple fields from the first entry of the first dataloader in the dictionary
-        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields
+    if "train" in dataloaders.keys():
+        dataloaders = dataloaders["train"]
 
-        session_shape_dict = get_dims_for_loader_dict(dataloaders)
-        n_neurons_dict = {k: v[out_name][1] for k, v in session_shape_dict.items()}
-        in_shapes_dict = {k: v[in_name] for k, v in session_shape_dict.items()}
-        input_channels = [v[in_name][1] for v in session_shape_dict.values()]
+    # Obtain the named tuple fields from the first entry of the first dataloader in the dictionary
+    in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields
 
-    core_input_channels = list(input_channels.values())[0] if isinstance(input_channels, dict) else input_channels[0]
+    session_shape_dict = get_dims_for_loader_dict(dataloaders)
+    n_neurons_dict = {k: v[out_name][1] for k, v in session_shape_dict.items()}
+    in_shapes_dict = {k: v[in_name] for k, v in session_shape_dict.items()}
+    input_channels = [v[in_name][1] for v in session_shape_dict.values()]
 
     class Encoder(nn.Module):
 
