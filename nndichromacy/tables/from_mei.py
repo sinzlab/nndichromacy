@@ -1,19 +1,18 @@
 from __future__ import annotations
+from typing import Callable, Iterable, Mapping, Optional, Tuple, Dict, Any
 
 import datajoint as dj
 from nnfabrik.main import Dataset
 from .from_nnfabrik import TrainedModel
-from mlutils.data.datasets import StaticImageSet, FileTreeDataset
-from featurevis import integration
-from featurevis import mixins
-from featurevis.main import MEITemplate, MEISeed
 from torch.nn import Module
 from torch.utils.data import DataLoader
 
-from featurevis.integration import ConstrainedOutputModel
+from mei import mixins
+from mei.main import MEITemplate, MEISeed
+from mei.modules import ConstrainedOutputModel
+
 from nnfabrik.utility.dj_helpers import CustomSchema
 
-from typing import Callable, Iterable, Mapping, Optional, Tuple, Dict, Any
 Key = Dict[str, Any]
 Dataloaders = Dict[str, DataLoader]
 
