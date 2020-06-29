@@ -1,7 +1,7 @@
-from featurevis.integration import load_pickled_data
+from nndichromacy.legacy.featurevis.integration import load_pickled_data
 import numpy as np
 import types
-import featurevis
+import nndichromacy.legacy.featurevis
 
 def is_ensemble(model):
     return (isinstance(model, types.FunctionType) or isinstance(model, featurevis.integration.EnsembleModel))
