@@ -41,7 +41,7 @@ class TestCorrelation(ScoringTable):
 
 
 @schema
-class TestCorrelation_BlueTestSet(ScoringTable):
+class TestCorrelationBlueTestSet(ScoringTable):
     trainedmodel_table = TrainedModel
     dataset_table = Dataset
     unit_table = MEISelector
@@ -53,7 +53,7 @@ class TestCorrelation_BlueTestSet(ScoringTable):
 
 
 @schema
-class TestCorrelation_GreenTestSet(ScoringTable):
+class TestCorrelationGreenTestSet(ScoringTable):
     trainedmodel_table = TrainedModel
     dataset_table = Dataset
     unit_table = MEISelector
@@ -65,7 +65,7 @@ class TestCorrelation_GreenTestSet(ScoringTable):
 
 
 @schema
-class TestCorrelation_DependentTestSet(ScoringTable):
+class TestCorrelationDependentTestSet(ScoringTable):
     trainedmodel_table = TrainedModel
     dataset_table = Dataset
     unit_table = MEISelector
@@ -77,7 +77,7 @@ class TestCorrelation_DependentTestSet(ScoringTable):
 
 
 @schema
-class TestCorrelation_Dependent_highMSE(ScoringTable):
+class TestCorrelationDependenthighMSE(ScoringTable):
     trainedmodel_table = TrainedModel
     dataset_table = Dataset
     unit_table = MEISelector
@@ -116,7 +116,7 @@ class CorrelationToAvergeEnsemble(ScoringTable):
 
 
 @schema
-class TestCorrEnsemble_BlueSet(ScoringTable):
+class TestCorrEnsembleBlueSet(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
     unit_table = MEISelector
@@ -129,7 +129,7 @@ class TestCorrEnsemble_BlueSet(ScoringTable):
 
 
 @schema
-class TestCorrEnsemble_GreenSet(ScoringTable):
+class TestCorrEnsembleGreenSet(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
     unit_table = MEISelector
@@ -142,7 +142,7 @@ class TestCorrEnsemble_GreenSet(ScoringTable):
 
 
 @schema
-class TestCorrEnsemble_DepSet(ScoringTable):
+class TestCorrEnsembleDepSet(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
     unit_table = MEISelector
@@ -155,7 +155,7 @@ class TestCorrEnsemble_DepSet(ScoringTable):
 
 
 @schema
-class TestCorrEnsemble_DepSet_HighMSE(ScoringTable):
+class TestCorrEnsembleDepSetHighMSE(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
     unit_table = MEISelector
@@ -168,7 +168,7 @@ class TestCorrEnsemble_DepSet_HighMSE(ScoringTable):
 
 
 @schema
-class CorrToAvgEnsemble_BlueSet(ScoringTable):
+class CorrToAvgEnsembleBlueSet(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
     unit_table = MEISelector
@@ -181,7 +181,7 @@ class CorrToAvgEnsemble_BlueSet(ScoringTable):
 
 
 @schema
-class CorrToAvgEnsemble_GreenSet(ScoringTable):
+class CorrToAvgEnsembleGreenSet(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
     unit_table = MEISelector
@@ -194,7 +194,7 @@ class CorrToAvgEnsemble_GreenSet(ScoringTable):
 
 
 @schema
-class CorrToAvgEnsemble_DepSet(ScoringTable):
+class CorrToAvgEnsembleDepSet(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
     unit_table = MEISelector
@@ -207,7 +207,7 @@ class CorrToAvgEnsemble_DepSet(ScoringTable):
 
 
 @schema
-class CorrToAvgEnsemble_DepSet_HighMSE(ScoringTable):
+class CorrToAvgEnsembleDepSetHighMSE(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
     unit_table = MEISelector
