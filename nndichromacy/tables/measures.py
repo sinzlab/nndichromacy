@@ -50,6 +50,39 @@ class OracleCorrelation(MeasuresTable):
     data_cache = DataCache
 
 
+@schema
+class OracleCorrelationBlueSet(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_oracles_corrected)
+    measure_dataset = "test"
+    measure_attribute = "oracle_correlation_blue"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_blue_only')
+
+
+@schema
+class OracleCorrelationGreenSet(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_oracles_corrected)
+    measure_dataset = "test"
+    measure_attribute = "oracle_correlation_green"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_green_only')
+
+
+@schema
+class OracleCorrelationDepSet(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_oracles_corrected)
+    measure_dataset = "test"
+    measure_attribute = "oracle_correlation_dependent"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb')
+
+
 ##### ============ Summary Scores ============ #####
 
 
