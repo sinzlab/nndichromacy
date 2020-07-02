@@ -20,14 +20,14 @@ def model_predictions_repeats(model, dataloader, data_key, device='cuda', broadc
     """
     
     target = []
-    unique_images = torch.empty(0)
+    unique_images = torch.empty(0).to(device)
     for images, responses in dataloader:
         if len(images.shape) == 5:
             images = images.squeeze(dim=0)
             responses = responses.squeeze(dim=0)
         
         assert torch.all(torch.eq(images[-1,], images[0,],)), "All images in the batch should be equal"
-        unique_images = torch.cat((unique_images, images[0:1, ]), dim=0)
+        unique_images = torch.cat((unique_images, images[0:1, ].to(device)), dim=0)
         target.append(responses.detach().cpu().numpy())
     
     # Forward unique images once:
