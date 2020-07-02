@@ -74,6 +74,9 @@ def static_loader(
     assert any([exclude_neuron_n==0, neuron_base_seed is not None]),  \
         "neuron_base_seed must be set when exclude_neuron_n is not 0"
 
+    if image_ids is not None and image_condition is not None:
+        raise ValueError("either 'image_condition' or 'image_ids' can be passed. They can not both be true.")
+
     if file_tree:
         dat = (
             FileTreeDataset(path, "images", "responses", "behavior")
@@ -151,10 +154,6 @@ def static_loader(
             "'image_id' 'colorframeprojector_image_id', or 'frame_image_id' have to present in the dataset under dat.info "
             "in order to load get the oracle repeats.")
     image_condition_filter = image_class == image_condition
-    if image_ids is None and image_condition is not None:
-        pass
-        # image_ids = frame_image_id[image_condition_filter]
-        # print(len(image_ids))
 
     image_id_array = frame_image_id
     for tier in keys:
@@ -171,8 +170,6 @@ def static_loader(
             np.random.set_state(random_state)
         elif image_condition is not None and image_ids is None:
             subset_idx = np.where(np.logical_and(image_condition_filter, tier_array == tier))[0]
-            #image_ids = frame_image_id[np.logical_and(image_condition_filter, tier_array == tier)]
-            #subset_idx = [np.where(image_id_array == image_id)[0][0] for image_id in image_ids]
             assert sum(tier_array[subset_idx] != tier) == 0, "image_ids contain validation or test images"
         else:
             subset_idx = np.where(tier_array == tier)[0]
