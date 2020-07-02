@@ -298,8 +298,8 @@ def add_h5_to_preprocessed_table(path, keys, comments):
 
     filenames = []
     for i, key in enumerate((experiment.Scan() & keys).proj()):
-        filename = (template + '.zip').format(**key)
-        PreprocessedMouseData().fill(filename, comment=comments[i])
-        filenames.append(filename)
+        filename = Path((template + '.zip').format(**key))
+        PreprocessedMouseData().fill(filename.name, comment=comments[i])
+        filenames.append(filename.name)
 
     return filenames
