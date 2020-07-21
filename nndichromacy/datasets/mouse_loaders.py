@@ -58,7 +58,7 @@ def static_loader(
         include_behavior (bool, optional): whether to include behavioral data
         select_input_channel (int, optional): Only for color images. Select a color channel
         file_tree (bool, optional): whether to use the file tree dataset format. If False, equivalent to the HDF5 format
-        image_condition (str, optional): selection of images based on the image condition
+        image_condition (str, or list of str, optional): selection of images based on the image condition
         return_test_sampler (bool, optional): whether to return only the test loader with repeat-batches
 
     Returns:
@@ -153,7 +153,14 @@ def static_loader(
         raise ValueError(
             "'image_id' 'colorframeprojector_image_id', or 'frame_image_id' have to present in the dataset under dat.info "
             "in order to load get the oracle repeats.")
-    image_condition_filter = image_class == image_condition
+
+    if isinstance(image_condition, str):
+        image_condition_filter = image_class == image_condition
+    elif isinstance(image_condition, list):
+        image_condition_filter = sum([image_class == i for i in image_condition]).astype(np.bool)
+    else:
+        raise TypeError("image_condition argument has to be a string or list of strings")
+
 
     image_id_array = frame_image_id
     for tier in keys:

@@ -45,12 +45,20 @@ def get_oracle_dataloader(dat,
     classes, class_idx = np.unique(image_class, return_inverse=True)
     identifiers = condition_hashes + class_idx * max_idx
     dat_tiers = dat.tiers if not file_tree else dat.trial_info.tiers
-    class_idx = image_class if isinstance(image_condition, str) else class_idx
 
-    sampling_condition = np.where(dat_tiers == 'test')[0] if image_condition is None else \
-        np.where((dat_tiers == 'test') & (class_idx == image_condition))[0]
+    if image_condition is None:
+        sampling_condition = np.where(dat_tiers == 'test')[0]
+    elif isinstance(image_condition, str):
+        image_condition_filter = image_class == image_condition
+        sampling_condition = np.where((dat_tiers == 'test') & (image_condition_filter))[0]
+    elif isinstance(image_condition, list):
+        image_condition_filter = sum([image_class == i for i in image_condition]).astype(np.bool)
+        sampling_condition = np.where((dat_tiers == 'test') & (image_condition_filter))[0]
+    else:
+        raise TypeError("image_condition argument has to be a string or list of strings")
+
     if (image_condition is not None) and verbose:
-        print("Created Testloader for image class {}".format(classes[image_condition]))
+        print(f"Created Testloader for image class {image_condition}")
 
     sampler = RepeatsBatchSampler(identifiers, sampling_condition)
     dataloaders = {}
