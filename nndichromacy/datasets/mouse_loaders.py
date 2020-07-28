@@ -159,7 +159,8 @@ def static_loader(
     elif isinstance(image_condition, list):
         image_condition_filter = sum([image_class == i for i in image_condition]).astype(np.bool)
     else:
-        raise TypeError("image_condition argument has to be a string or list of strings")
+        if image_condition is not None:
+            raise TypeError("image_condition argument has to be a string or list of strings")
 
 
     image_id_array = frame_image_id
