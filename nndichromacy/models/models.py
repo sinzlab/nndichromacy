@@ -165,6 +165,7 @@ def se_core_full_gauss_readout(dataloaders, seed, hidden_channels=32, input_kern
                                gamma_readout=4, elu_offset=0, stack=None, se_reduction=32, n_se_blocks=1,
                                depth_separable=False, linear=False, gauss_type='full',
                                grid_mean_predictor=None, share_features=False, share_grid=False, data_info=None,
+                               attention_conv=False,
                                ):
     """
     Model class of a stacked2dCore (from mlutils) and a pointpooled (spatial transformer) readout
@@ -268,7 +269,8 @@ def se_core_full_gauss_readout(dataloaders, seed, hidden_channels=32, input_kern
                     se_reduction=se_reduction,
                     n_se_blocks=n_se_blocks,
                     depth_separable=depth_separable,
-                    linear=linear)
+                    linear=linear,
+                    attention_conv=attention_conv)
 
     readout = MultipleFullGaussian2d(core, in_shape_dict=in_shapes_dict,
                                      n_neurons_dict=n_neurons_dict,
