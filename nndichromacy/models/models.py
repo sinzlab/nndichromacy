@@ -765,7 +765,7 @@ def rotation_equivariant_gauss_readout(dataloaders,
                                        readout_bias=True,  # readout args,
                                        gamma_readout=4,
                                        elu_offset=0,
-                                       ):
+                                       data_info=None):
     """
     A minimal implementation of the rotation equivariant core.
     """
