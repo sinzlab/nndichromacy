@@ -1,2 +1,1 @@
-from .monkey_loaders import monkey_static_loader, monkey_mua_sua_loader
 from .mouse_loaders import static_loaders, static_shared_loaders
