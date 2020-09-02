@@ -2,14 +2,14 @@ import numpy as np
 import torch
 import copy
 
-from mlutils.layers.cores import Stacked2dCore
+from mlutils.layers.cores import Stacked2dCore, RotationEquivariant2dCore
 from mlutils.layers.legacy import Gaussian2d
 from mlutils.layers.readouts import PointPooled2d
 from nnfabrik.utility.nn_helpers import get_module_output, set_random_seed, get_dims_for_loader_dict
 from torch import nn
 from torch.nn import functional as F
 
-from .cores import SE2dCore, TransferLearningCore, RotationEquivariantCore
+from .cores import SE2dCore, TransferLearningCore
 from .readouts import MultipleFullGaussian2d, MultiReadout, MultipleSpatialXFeatureLinear
 from .utility import unpack_data_info
 from .utility import *
@@ -88,7 +88,7 @@ def se_core_gauss_readout(dataloaders, seed, hidden_channels=32, input_kern=13, 
             dataloaders = dataloaders["train"]
 
         # Obtain the named tuple fields from the first entry of the first dataloader in the dictionary
-        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields
+        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields[:2]
 
         session_shape_dict = get_dims_for_loader_dict(dataloaders)
         n_neurons_dict = {k: v[out_name][1] for k, v in session_shape_dict.items()}
@@ -201,7 +201,7 @@ def se_core_full_gauss_readout(dataloaders, seed, hidden_channels=32, input_kern
             dataloaders = dataloaders["train"]
 
         # Obtain the named tuple fields from the first entry of the first dataloader in the dictionary
-        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields
+        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields[:2]
 
         session_shape_dict = get_dims_for_loader_dict(dataloaders)
         n_neurons_dict = {k: v[out_name][1] for k, v in session_shape_dict.items()}
@@ -329,7 +329,7 @@ def se_core_point_readout(dataloaders, seed, hidden_channels=32, input_kern=13, 
             dataloaders = dataloaders["train"]
 
         # Obtain the named tuple fields from the first entry of the first dataloader in the dictionary
-        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields
+        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields[:2]
 
         session_shape_dict = get_dims_for_loader_dict(dataloaders)
         n_neurons_dict = {k: v[out_name][1] for k, v in session_shape_dict.items()}
@@ -427,7 +427,7 @@ def stacked2d_core_gaussian_readout(dataloaders, seed, hidden_channels=32, input
             dataloaders = dataloaders["train"]
 
         # Obtain the named tuple fields from the first entry of the first dataloader in the dictionary
-        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields
+        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields[:2]
 
         session_shape_dict = get_dims_for_loader_dict(dataloaders)
         n_neurons_dict = {k: v[out_name][1] for k, v in session_shape_dict.items()}
@@ -523,7 +523,7 @@ def vgg_core_gauss_readout(dataloaders, seed,
 
 
         # Obtain the named tuple fields from the first entry of the first dataloader in the dictionary
-        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields
+        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields[:2]
 
         session_shape_dict = get_dims_for_loader_dict(dataloaders)
         n_neurons_dict = {k: v[out_name][1] for k, v in session_shape_dict.items()}
@@ -609,7 +609,7 @@ def vgg_core_full_gauss_readout(dataloaders, seed,
             dataloaders = dataloaders["train"]
 
         # Obtain the named tuple fields from the first entry of the first dataloader in the dictionary
-        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields
+        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields[:2]
 
         session_shape_dict = get_dims_for_loader_dict(dataloaders)
         n_neurons_dict = {k: v[out_name][1] for k, v in session_shape_dict.items()}
@@ -690,7 +690,7 @@ def se_core_spatialXfeature_readout(dataloaders, seed, hidden_channels=32, input
 
 
         # Obtain the named tuple fields from the first entry of the first dataloader in the dictionary
-        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields
+        in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields[:2]
 
         session_shape_dict = get_dims_for_loader_dict(dataloaders)
         n_neurons_dict = {k: v[out_name][1] for k, v in session_shape_dict.items()}
@@ -760,6 +760,11 @@ def se_core_spatialXfeature_readout(dataloaders, seed, hidden_channels=32, input
 
 def rotation_equivariant_gauss_readout(dataloaders,
                                        seed,
+                                       hidden_channels=32,
+                                       input_kern=13,
+                                       hidden_kern=3,
+                                       layers=3,
+                                       num_rotations=8,
                                        init_mu_range=0.2,
                                        init_sigma_range=0.5,
                                        readout_bias=True,  # readout args,
@@ -775,12 +780,14 @@ def rotation_equivariant_gauss_readout(dataloaders,
         dataloaders = dataloaders["train"]
 
     # Obtain the named tuple fields from the first entry of the first dataloader in the dictionary
-    in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields
+    in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields[:2]
 
     session_shape_dict = get_dims_for_loader_dict(dataloaders)
     n_neurons_dict = {k: v[out_name][1] for k, v in session_shape_dict.items()}
     in_shapes_dict = {k: v[in_name] for k, v in session_shape_dict.items()}
     input_channels = [v[in_name][1] for v in session_shape_dict.values()]
+
+    core_input_channels = list(input_channels.values())[0] if isinstance(input_channels, dict) else input_channels[0]
 
     class Encoder(nn.Module):
 
@@ -802,7 +809,13 @@ def rotation_equivariant_gauss_readout(dataloaders,
 
     set_random_seed(seed)
 
-    core = RotationEquivariantCore()
+    core = RotationEquivariant2dCore(input_channels=core_input_channels,
+                                     hidden_channels=hidden_channels,
+                                     input_kern=input_kern,
+                                     hidden_kern=hidden_kern,
+                                     layers=layers,
+                                     num_rotations=num_rotations
+                                     )
 
     readout = MultipleGaussian2d(core, in_shape_dict=in_shapes_dict,
                                  n_neurons_dict=n_neurons_dict,
