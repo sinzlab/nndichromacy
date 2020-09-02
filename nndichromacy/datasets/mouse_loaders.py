@@ -35,6 +35,8 @@ def static_loader(
     file_tree=True,
     image_condition=None,
     return_test_sampler=False,
+    inputs_mean=None,
+    inputs_std=None,
 ):
     """
     returns a single data loader
@@ -114,8 +116,9 @@ def static_loader(
         idx = [np.where(dat.neurons.unit_ids == unit_id)[0][0] for unit_id in neuron_ids]
 
     more_transforms = [Subsample(idx), ToTensor(cuda)]
+
     if normalize:
-        more_transforms.insert(0, NeuroNormalizer(dat, exclude=exclude))
+        more_transforms.insert(0, NeuroNormalizer(dat, exclude=exclude, inputs_mean=inputs_mean, inputs_std=inputs_std))
 
     if include_behavior:
         more_transforms.insert(0, AddBehaviorAsChannels())
@@ -167,7 +170,6 @@ def static_loader(
     for tier in keys:
         # sample images
         if tier == "train" and image_ids is not None and image_condition is None:
-            print("wrong")
             subset_idx = [np.where(image_id_array == image_id)[0][0] for image_id in image_ids]
             assert sum(tier_array[subset_idx] != "train") == 0, "image_ids contain validation or test images"
         elif tier == "train" and image_n is not None and image_condition is None:
@@ -209,6 +211,8 @@ def static_loaders(
     select_input_channel=None,
     file_tree=True,
     image_condition=None,
+    inputs_mean=None,
+    inputs_std=None,
 ):
     """
     Returns a dictionary of dataloaders (i.e., trainloaders, valloaders, and testloaders) for >= 1 dataset(s).
@@ -268,7 +272,9 @@ def static_loaders(
             exclude=exclude,
             select_input_channel=select_input_channel,
             file_tree=file_tree,
-            image_condition=image_condition
+            image_condition=image_condition,
+            inputs_mean=inputs_mean,
+            inputs_std=inputs_std,
         )
         for k in dls:
             dls[k][data_key] = loaders[k]
