@@ -6,14 +6,26 @@ import os
 from nnfabrik.main import Model, Dataset, Trainer, Seed, Fabrikant
 from nnfabrik.utility.dj_helpers import gitlog, make_hash
 import numpy as np
-from ..utility.measures import get_oracles, get_repeats, get_FEV, get_explainable_var, get_correlations, \
-    get_poisson_loss, get_avg_correlations, get_predictions, get_targets, get_fraction_oracles
+from ..utility.measures import (get_oracles,
+                                get_repeats,
+                                get_FEV,
+                                get_explainable_var,
+                                get_correlations,
+                                get_poisson_loss,
+                                get_avg_correlations,
+                                get_predictions,
+                                get_targets,
+                                get_fraction_oracles,
+                                get_mei_norm,
+                                get_mei_color_bias)
 from .from_nnfabrik import TrainedModel, ScoringTable, SummaryScoringTable
 from .from_mei import MEISelector, TrainedEnsembleModel
 from .utility import DataCache, TrainedModelCache, EnsembleModelCache
 from nnfabrik.utility.dj_helpers import CustomSchema
+from .from_mei import MEIScore
 
 schema = CustomSchema(dj.config.get('schema_name', 'nnfabrik_core'))
+fetch_download_path = '/data/fetched_from_attach'
 
 
 @schema
