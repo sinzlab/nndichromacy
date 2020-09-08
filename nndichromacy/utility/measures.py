@@ -419,3 +419,24 @@ def get_fano_factor(dataloaders, as_dict=False, per_neuron=True):
         fano_factor = np.hstack([v for v in fano_factor.values()]) if per_neuron else np.mean(
             np.hstack([v for v in fano_factor.values()]))
     return fano_factor
+
+
+def get_mei_norm(mei, channel=None):
+    norm =  torch.norm(mei) if channel is None else torch.norm(mei[:, channel, ...])
+    return norm.numpy()
+
+
+def get_mei_color_bias(mei):
+    """
+    Computed the color bias as the norm of channel 0 (usually Green) divided by the norm of channel 1 (usually UV).
+    Args:
+        mei (torch.tensor): an MEI as fetched by the "mei" attribute of the MEI table. Tensor the shape of NxCxWxH
+
+    Returns:
+        color_bias (float): A scalar, representing the color bias as computed in norm(channel 0) / norm(channel1).
+    """
+    if mei.shape[1] != 2:
+        raise ValueError("MEI color bias can only be computed for 2 color channels")
+
+    color_bias = (torch.norm(mei[:, 0, ...]) / torch.norm(mei[:, 1, ...])).cpu().numpy()
+    return color_bias
