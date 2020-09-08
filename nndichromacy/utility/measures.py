@@ -4,6 +4,7 @@ import torch
 from mlutils.measures import corr
 from mlutils.training import eval_state, device_state
 import types
+from collections.abc import Iterable
 import contextlib
 import warnings
 from .measure_helpers import get_subset_of_repeats, is_ensemble_function
@@ -18,28 +19,35 @@ def model_predictions_repeats(model, dataloader, data_key, device='cuda', broadc
         output: responses as predicted by the network for the unique images. If broadcast_to_target, returns repeated 
                 outputs of shape [num_images][num_reaps, num_neurons] else (default) returns unique outputs of shape [num_images, num_neurons]
     """
-    
-    target = []
+    target, output = [], []
     unique_images = torch.empty(0).to(device)
-    for images, responses in dataloader:
+    for batch in dataloader:
+        images, responses = batch[:2]
+
+
         if len(images.shape) == 5:
             images = images.squeeze(dim=0)
             responses = responses.squeeze(dim=0)
-        
-        assert torch.all(torch.eq(images[-1,], images[0,],)), "All images in the batch should be equal"
+
+        assert torch.all(torch.eq(images[-1, :2, ...], images[0, :2, ...],)), "All images in the batch should be equal"
         unique_images = torch.cat((unique_images, images[0:1, ].to(device)), dim=0)
         target.append(responses.detach().cpu().numpy())
-    
-    # Forward unique images once:
-    with eval_state(model) if not is_ensemble_function(model) else contextlib.nullcontext():
-        with device_state(model, device) if not is_ensemble_function(model) else contextlib.nullcontext():
-            output = model(unique_images.to(device), data_key=data_key).detach().cpu()
-    
-    output = output.numpy()   
-        
-    if broadcast_to_target:
-        output = [np.broadcast_to(x, target[idx].shape) for idx, x in enumerate(output)]
-    
+
+        if len(batch) > 2 and images.shape[1] > 3:
+            with eval_state(model) if not is_ensemble_function(model) else contextlib.nullcontext():
+                with device_state(model, device) if not is_ensemble_function(model) else contextlib.nullcontext():
+                    output.append(model(images.to(device), data_key=data_key).detach().cpu().numpy())
+
+    # Forward unique images once
+    if len(output) == 0:
+        with eval_state(model) if not is_ensemble_function(model) else contextlib.nullcontext():
+            with device_state(model, device) if not is_ensemble_function(model) else contextlib.nullcontext():
+                output = model(unique_images.to(device), data_key=data_key).detach().cpu()
+
+            output = output.numpy()
+
+            if broadcast_to_target:
+                output = [np.broadcast_to(x, target[idx].shape) for idx, x in enumerate(output)]
     return target, output
     
 
@@ -52,7 +60,8 @@ def model_predictions(model, dataloader, data_key, device='cpu'):
     """
 
     target, output = torch.empty(0), torch.empty(0)
-    for images, responses in dataloader:
+    for batch in dataloader:
+        images, responses = batch[:2]
         if len(images.shape) == 5:
             images = images.squeeze(dim=0)
             responses = responses.squeeze(dim=0)
@@ -64,7 +73,7 @@ def model_predictions(model, dataloader, data_key, device='cpu'):
     return target.numpy(), output.numpy()
 
 
-def get_avg_correlations(model, dataloaders, device='cpu', as_dict=False, per_neuron=True, **kwargs):
+def get_avg_correlations(model, dataloaders, device='cpu', as_dict=False, per_neuron=True):
     """
     Returns correlation between model outputs and average responses over repeated trials
     
@@ -76,9 +85,15 @@ def get_avg_correlations(model, dataloaders, device='cpu', as_dict=False, per_ne
     for k, loader in dataloaders.items():
 
         # Compute correlation with average targets
-        target, output = model_predictions_repeats(dataloader=loader, model=model, data_key=k, device=device, broadcast_to_target=False)
+        target, output = model_predictions_repeats(dataloader=loader,
+                                                   model=model,
+                                                   data_key=k,
+                                                   device=device,
+                                                   broadcast_to_target=False)
+
         target_mean = np.array([t.mean(axis=0) for t in target])
-        correlations[k] = corr(target_mean, output, axis=0)
+        output_mean = np.array([t.mean(axis=0) for t in output]) if target[0].shape == output[0].shape else output
+        correlations[k] = corr(target_mean, output_mean, axis=0)
         
         # Check for nans
         if np.any(np.isnan(correlations[k])):
@@ -389,7 +404,8 @@ def get_avg_firing(dataloaders, as_dict=False, per_neuron=True):
     avg_firing = {}
     for k, dataloader in dataloaders.items():
         target = torch.empty(0)
-        for images, responses in dataloader:
+        for batch in dataloader:
+            images, responses = batch[:2]
             if len(images.shape) == 5:
                 responses = responses.squeeze(dim=0)
             target = torch.cat((target, responses.detach().cpu()), dim=0)
@@ -409,7 +425,8 @@ def get_fano_factor(dataloaders, as_dict=False, per_neuron=True):
     fano_factor = {}
     for k, dataloader in dataloaders.items():
         target = torch.empty(0)
-        for images, responses in dataloader:
+        for batch in dataloader:
+            images, responses = batch[:2]
             if len(images.shape) == 5:
                 responses = responses.squeeze(dim=0)
             target = torch.cat((target, responses.detach().cpu()), dim=0)
