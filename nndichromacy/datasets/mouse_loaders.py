@@ -93,7 +93,7 @@ def static_loader(
         )
     assert (
         include_behavior and select_input_channel
-    ) is None, "Selecting an Input Channel and Adding Behavior can not both be true"
+    ) is not True, "Selecting an Input Channel and Adding Behavior can not both be true"
 
     # The permutation MUST be added first and the conditions below MUST NOT be based on the original order
     # specify condition(s) for sampling neurons. If you want to sample specific neurons define conditions that would effect idx
