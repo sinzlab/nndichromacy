@@ -254,3 +254,70 @@ class FractionOracleJackknifeEnsemble(SummaryScoringTable):
     model_cache = None
 
 
+@schema
+class FractionOracleJackknifeEnsembleDepSetHighMSE(SummaryScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_fraction_oracles)
+    measure_dataset = "test"
+    measure_attribute = "fraction_oracle_jackknife_dependent"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb')
+
+
+@schema
+class FractionOracleJackknifeEnsembleBlueSet(SummaryScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_fraction_oracles)
+    measure_dataset = "test"
+    measure_attribute = "fraction_oracle_jackknife_blue"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_blue_only')
+
+
+@schema
+class FractionOracleJackknifeEnsembleGreenSet(SummaryScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_fraction_oracles)
+    measure_dataset = "test"
+    measure_attribute = "fraction_oracle_jackknife_green"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_green_only')
+
+
+@schema
+class MEINorm(MEIScore):
+    measure_function = staticmethod(get_mei_norm)
+    measure_attribute = "mei_norm"
+    external_download_path = fetch_download_path
+
+
+@schema
+class MEINormBlue(MEIScore):
+    measure_function = staticmethod(get_mei_norm)
+    measure_attribute = "mei_norm"
+    external_download_path = fetch_download_path
+    function_kwargs = dict(channel=1)
+
+
+@schema
+class MEINormGreen(MEIScore):
+    measure_function = staticmethod(get_mei_norm)
+    measure_attribute = "mei_norm"
+    external_download_path = fetch_download_path
+    function_kwargs = dict(channel=0)
+
+
+@schema
+class MEIColorBias(MEIScore):
+    measure_function = staticmethod(get_mei_color_bias)
+    measure_attribute = "mei_color_bias"
+    external_download_path = fetch_download_path
