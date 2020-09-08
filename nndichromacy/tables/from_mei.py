@@ -101,3 +101,45 @@ class MEI(mixins.MEITemplateMixin, dj.Computed):
     selector_table = MEISelector
     method_table = MEIMethod
     seed_table = MEISeed
+
+
+@schema
+class MEIScore(dj.Computed):
+    """
+    A template for a MEI scoring table.
+    """
+
+    mei_table = MEI
+    measure_attribute = "score"
+    function_kwargs = {}
+    external_download_path = None
+
+    # table level comment
+    table_comment = "A template table for storing results/scores of a MEI"
+
+    @property
+    def definition(self):
+        definition = """
+                    # {table_comment}
+                    -> self.mei_table
+                    ---
+                    {measure_attribute}:      float     # A template for a computed score of a trained model
+                    {measure_attribute}_ts=CURRENT_TIMESTAMP: timestamp    # UTZ timestamp at time of insertion
+                    """.format(table_comment=self.table_comment, measure_attribute=self.measure_attribute)
+        return definition
+
+    @staticmethod
+    def measure_function(mei, **kwargs):
+        raise NotImplementedError("Scoring Function has to be implemented")
+
+    def get_mei(self, key):
+        mei = torch.load((self.mei_table & key).fetch1("mei", download_path=self.external_download_path))
+        return mei
+
+    def make(self, key):
+        mei = self.get_mei(key=key)
+        score = self.measure_function(mei, **self.function_kwargs)
+        key[self.measure_attribute] = score
+        self.insert1(key, ignore_extra_fields=True)
+
+
