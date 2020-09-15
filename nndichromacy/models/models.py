@@ -13,6 +13,12 @@ from .cores import SE2dCore, TransferLearningCore
 from .readouts import MultipleFullGaussian2d, MultiReadout, MultipleSpatialXFeatureLinear
 from .utility import unpack_data_info
 from .utility import *
+from .shifters import MLPShifter, StaticAffine2dShifter
+from .encoders import Encoder
+
+
+# from . import logger as log
+
 
 class MultiplePointPooled2d(MultiReadout, torch.nn.ModuleDict):
     def __init__(self, core, in_shape_dict, n_neurons_dict, pool_steps, pool_kern, bias, init_range, gamma_readout):
@@ -165,7 +171,9 @@ def se_core_full_gauss_readout(dataloaders, seed, hidden_channels=32, input_kern
                                gamma_readout=4, elu_offset=0, stack=None, se_reduction=32, n_se_blocks=1,
                                depth_separable=False, linear=False, gauss_type='full',
                                grid_mean_predictor=None, share_features=False, share_grid=False, data_info=None,
-                               attention_conv=False,
+                               attention_conv=False, shifter=None, shifter_type='MLP', input_channels_shifter=2,
+                               hidden_channels_shifter=5,
+                               shift_layers=3, gamma_shifter=0, shifter_bias=True,
                                ):
     """
     Model class of a stacked2dCore (from mlutils) and a pointpooled (spatial transformer) readout
@@ -230,23 +238,21 @@ def se_core_full_gauss_readout(dataloaders, seed, hidden_channels=32, input_kern
             assert len(set(match_id) & all_multi_unit_ids) == len(all_multi_unit_ids), \
                 'All multi unit IDs must be present in all datasets'
 
-    class Encoder(nn.Module):
+    if shifter is True:
+        data_keys = [i for i in dataloaders.keys()]
+        if shifter_type == 'MLP':
+            shifter = MLPShifter(data_keys=data_keys,
+                                 input_channels=input_channels_shifter,
+                                 hidden_channels_shifter=hidden_channels_shifter,
+                                 shift_layers=shift_layers,
+                                 gamma_shifter=gamma_shifter
+                                 )
 
-        def __init__(self, core, readout, elu_offset):
-            super().__init__()
-            self.core = core
-            self.readout = readout
-            self.offset = elu_offset
-
-        def forward(self, x, data_key=None, **kwargs):
-            x = self.core(x)
-
-            sample = kwargs["sample"] if 'sample' in kwargs else None
-            x = self.readout(x, data_key=data_key, sample=sample)
-            return F.elu(x + self.offset) + 1
-
-        def regularizer(self, data_key):
-            return self.core.regularizer() + self.readout.regularizer(data_key=data_key)
+        elif shifter_type == 'StaticAffine':
+            shifter = StaticAffine2dShifter(data_keys=data_keys,
+                                            input_channels=input_channels_shifter,
+                                            bias=shifter_bias,
+                                            gamma_shifter=gamma_shifter)
 
     set_random_seed(seed)
 
@@ -293,7 +299,10 @@ def se_core_full_gauss_readout(dataloaders, seed, hidden_channels=32, input_kern
             _, targets = next(iter(value))[:2]
             readout[key].bias.data = targets.mean(0)
 
-    model = Encoder(core, readout, elu_offset)
+    model = Encoder(core=core,
+                    readout=readout,
+                    elu_offset=elu_offset,
+                    shifter=shifter)
 
     return model
 
@@ -433,7 +442,6 @@ def stacked2d_core_gaussian_readout(dataloaders, seed, hidden_channels=32, input
         n_neurons_dict = {k: v[out_name][1] for k, v in session_shape_dict.items()}
         in_shapes_dict = {k: v[in_name] for k, v in session_shape_dict.items()}
         input_channels = [v[in_name][1] for v in session_shape_dict.values()]
-        
 
     core_input_channels = list(input_channels.values())[0] if isinstance(input_channels, dict) else input_channels[0]
 
@@ -521,7 +529,6 @@ def vgg_core_gauss_readout(dataloaders, seed,
         if "train" in dataloaders.keys():
             dataloaders = dataloaders["train"]
 
-
         # Obtain the named tuple fields from the first entry of the first dataloader in the dictionary
         in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields[:2]
 
@@ -562,11 +569,11 @@ def vgg_core_gauss_readout(dataloaders, seed,
                                 bias=bias)
 
     readout = MultipleGaussian2d(core, in_shape_dict=in_shapes_dict,
-                                     n_neurons_dict=n_neurons_dict,
-                                     init_mu_range=init_mu_range,
-                                     bias=readout_bias,
-                                     gamma_readout=gamma_readout,
-                                     init_sigma_range=init_sigma_range,
+                                 n_neurons_dict=n_neurons_dict,
+                                 init_mu_range=init_mu_range,
+                                 bias=readout_bias,
+                                 gamma_readout=gamma_readout,
+                                 init_sigma_range=init_sigma_range,
                                  )
 
     if readout_bias and data_info is None:
@@ -580,11 +587,11 @@ def vgg_core_gauss_readout(dataloaders, seed,
 
 
 def vgg_core_full_gauss_readout(dataloaders, seed,
-                           input_channels=1, tr_model_fn='vgg16',  # begin of core args
-                           model_layer=11, momentum=0.1, final_batchnorm=True,
-                           final_nonlinearity=True, bias=False,
-                           init_mu_range=0.4, init_sigma_range=0.6, readout_bias=True,  # begin or readout args
-                           gamma_readout=0.002, elu_offset=-1, gauss_type='uncorrelated', data_info=None):
+                                input_channels=1, tr_model_fn='vgg16',  # begin of core args
+                                model_layer=11, momentum=0.1, final_batchnorm=True,
+                                final_nonlinearity=True, bias=False,
+                                init_mu_range=0.4, init_sigma_range=0.6, readout_bias=True,  # begin or readout args
+                                gamma_readout=0.002, elu_offset=-1, gauss_type='uncorrelated', data_info=None):
     """
     A Model class of a predefined core (using models from torchvision.models). Can be initialized pretrained or random.
     Can also be set to be trainable or not, independent of initialization.
@@ -647,15 +654,13 @@ def vgg_core_full_gauss_readout(dataloaders, seed,
                                 final_nonlinearity=final_nonlinearity,
                                 bias=bias)
 
-
     readout = MultipleGaussian2d(core, in_shape_dict=in_shapes_dict,
                                  n_neurons_dict=n_neurons_dict,
                                  init_mu_range=init_mu_range,
                                  bias=readout_bias,
                                  init_sigma_range=init_sigma_range,
                                  gamma_readout=gamma_readout)
-    
-    
+
     if readout_bias and data_info is None:
         for key, value in dataloaders.items():
             _, targets = next(iter(value))[:2]
@@ -672,7 +677,8 @@ def se_core_spatialXfeature_readout(dataloaders, seed, hidden_channels=32, input
                                     pad_input=False, batch_norm=True, hidden_dilation=1,
                                     laplace_padding=None, input_regularizer='LaplaceL2norm',
                                     init_noise=1e-3, readout_bias=True,  # readout args,
-                                    gamma_readout=4, normalize=False, elu_offset=0, stack=None, se_reduction=32, n_se_blocks=1,
+                                    gamma_readout=4, normalize=False, elu_offset=0, stack=None, se_reduction=32,
+                                    n_se_blocks=1,
                                     depth_separable=False, linear=False, data_info=None):
     """
     Model class of a stacked2dCore (from mlutils) and a spatialXfeature (factorized) readout
@@ -687,7 +693,6 @@ def se_core_spatialXfeature_readout(dataloaders, seed, hidden_channels=32, input
     else:
         if "train" in dataloaders.keys():
             dataloaders = dataloaders["train"]
-
 
         # Obtain the named tuple fields from the first entry of the first dataloader in the dictionary
         in_name, out_name = next(iter(list(dataloaders.values())[0]))._fields[:2]
@@ -710,7 +715,7 @@ def se_core_spatialXfeature_readout(dataloaders, seed, hidden_channels=32, input
         def forward(self, x, data_key=None, **kwargs):
             x = self.core(x)
 
-            x = self.readout(x, data_key=data_key,)
+            x = self.readout(x, data_key=data_key, )
             return F.elu(x + self.offset) + 1
 
         def regularizer(self, data_key):
@@ -774,7 +779,6 @@ def rotation_equivariant_gauss_readout(dataloaders,
     """
     A minimal implementation of the rotation equivariant core.
     """
-
 
     if "train" in dataloaders.keys():
         dataloaders = dataloaders["train"]
