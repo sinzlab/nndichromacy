@@ -6,7 +6,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 
 from nnfabrik.utility.nn_helpers import set_random_seed
 from mlutils.data.datasets import StaticImageSet, FileTreeDataset
-from mlutils.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel
+from mlutils.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel, ScaleInputs
 from mlutils.data.samplers import SubsetSequentialSampler
 from .utility import get_oracle_dataloader
 from dataport.bcm.static import fetch_non_existing_data
@@ -37,6 +37,8 @@ def static_loader(
     return_test_sampler=False,
     inputs_mean=None,
     inputs_std=None,
+    scale=None,
+    include_eye_position=None,
 ):
     """
     returns a single data loader
@@ -79,18 +81,17 @@ def static_loader(
     if image_ids is not None and image_condition is not None:
         raise ValueError("either 'image_condition' or 'image_ids' can be passed. They can not both be true.")
 
+    data_keys = ["images", "responses",]
+    if include_behavior:
+        data_keys.append("behavior")
+    if include_eye_position:
+        data_keys.append("pupil_center")
+
     if file_tree:
-        dat = (
-            FileTreeDataset(path, "images", "responses", "behavior")
-            if include_behavior
-            else FileTreeDataset(path, "images", "responses")
-        )
+        dat = FileTreeDataset(path, *data_keys)
     else:
-        dat = (
-            StaticImageSet(path, "images", "responses", "behavior")
-            if include_behavior
-            else StaticImageSet(path, "images", "responses")
-        )
+        dat = StaticImageSet(path, *data_keys)
+
     assert (
         include_behavior and select_input_channel
     ) is not True, "Selecting an Input Channel and Adding Behavior can not both be true"
@@ -116,15 +117,18 @@ def static_loader(
 
     more_transforms = [Subsample(idx), ToTensor(cuda)]
 
-    if normalize:
-        more_transforms.insert(0, NeuroNormalizer(dat, exclude=exclude, inputs_mean=inputs_mean, inputs_std=inputs_std))
-
     if include_behavior:
         more_transforms.insert(0, AddBehaviorAsChannels())
 
+    if normalize:
+        more_transforms.insert(0, NeuroNormalizer(dat, exclude=exclude, inputs_mean=inputs_mean, inputs_std=inputs_std))
+
+    if scale is not None:
+        more_transforms.insert(0, ScaleInputs(scale=scale))
+
+
     if select_input_channel is not None:
         more_transforms.insert(0, SelectInputChannel(select_input_channel))
-
     dat.transforms.extend(more_transforms)
 
     # create the data_key for a specific data path
@@ -212,6 +216,8 @@ def static_loaders(
     image_condition=None,
     inputs_mean=None,
     inputs_std=None,
+    scale=None,
+    include_eye_position=None,
 ):
     """
     Returns a dictionary of dataloaders (i.e., trainloaders, valloaders, and testloaders) for >= 1 dataset(s).
@@ -274,6 +280,8 @@ def static_loaders(
             image_condition=image_condition,
             inputs_mean=inputs_mean,
             inputs_std=inputs_std,
+            scale=scale,
+            include_eye_position=include_eye_position,
         )
         for k in dls:
             dls[k][data_key] = loaders[k]
