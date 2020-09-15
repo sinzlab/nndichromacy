@@ -3,6 +3,7 @@ import warnings
 import torch
 import torch.nn.functional as F
 from scipy import signal
+from collections.abc import Iterable
 
 from mei.legacy.utils import varargin
 from ..tables.scores import MEINorm, MEINormBlue, MEINormGreen
@@ -52,7 +53,6 @@ class BlurAndCut:
         blurred_x = F.conv2d(padded_x, y_gaussian.repeat(num_channels, 1, 1)[..., None], groups=num_channels)
         blurred_x = F.conv2d(blurred_x, x_gaussian.repeat(num_channels, 1, 1, 1), groups=num_channels)
         final_x = blurred_x / (y_gaussian.sum() * x_gaussian.sum())  # normalize
-
         if self.cut_channel is not None:
             final_x[:, self.cut_channel, ...] *= 0
 
@@ -92,7 +92,6 @@ class ChangeNormAndClipAdaptive:
         norm_key.update(key)
         norm_key["method_hash"] = method_key
         self.norm = (MEINormGreen & norm_key).fetch1("mei_norm") if channel == 0 else (MEINormBlue & norm_key).fetch1("mei_norm")
-        print("norm: ", self.norm)
         self.x_min = x_min
         self.x_max = x_max
 
@@ -125,3 +124,44 @@ class ChangeNormAdaptiveAndClip:
         x_norm = torch.norm(x[:, self.channel, ...])
         x[:, self.channel, ...] = x[:, self.channel, ...] * (self.norm / x_norm)
         return torch.clamp(x, self.x_min, self.x_max)
+
+
+class ChangeNormInChannel:
+    """ Change the norm of the input.
+
+    Arguments:
+        norm (float or tensor): Desired norm. If tensor, it should be the same length as
+            x.
+    """
+
+    def __init__(self, channel, norm):
+
+        self.channel = channel
+        self.norm = norm
+
+    @varargin
+    def __call__(self, x, iteration=None):
+        x_norm = torch.norm(x[:, self.channel, ...])
+        x[:, self.channel, ...] = x[:, self.channel, ...] * (self.norm / x_norm)
+        return x
+
+
+class ClipNormInChannel:
+    """ Change the norm of the input.
+
+    Arguments:
+        norm (float or tensor): Desired norm. If tensor, it should be the same length as
+            x.
+    """
+
+    def __init__(self, channel, norm):
+
+        self.channel = channel
+        self.norm = norm
+
+    @varargin
+    def __call__(self, x, iteration=None):
+        x_norm = torch.norm(x[:, self.channel, ...])
+        if x_norm > self.norm:
+            x[:, self.channel, ...] = x[:, self.channel, ...] * (self.norm / x_norm)
+        return x
