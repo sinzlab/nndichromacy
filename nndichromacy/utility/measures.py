@@ -29,7 +29,7 @@ def model_predictions_repeats(model, dataloader, data_key, device='cuda', broadc
             images = images.squeeze(dim=0)
             responses = responses.squeeze(dim=0)
 
-        assert torch.all(torch.eq(images[-1, :2, ...], images[0, :2, ...],)), "All images in the batch should be equal"
+        assert torch.all(torch.eq(images[-1, :1, ...], images[0, :1, ...],)), "All images in the batch should be equal"
         unique_images = torch.cat((unique_images, images[0:1, ].to(device)), dim=0)
         target.append(responses.detach().cpu().numpy())
 
@@ -141,7 +141,8 @@ def get_repeats(dataloader, min_repeats=2):
     # save the responses of all neuron to the repeats of an image as an element in a list
     repeated_inputs = []
     repeated_outputs = []
-    for inputs, outputs in dataloader:
+    for batch in dataloader:
+        inputs, outputs = batch[:2]
         if len(inputs.shape) == 5:
             inputs = np.squeeze(inputs.cpu().numpy(), axis=0)
             outputs = np.squeeze(outputs.cpu().numpy(), axis=0)
@@ -151,7 +152,8 @@ def get_repeats(dataloader, min_repeats=2):
         r, n = outputs.shape  # number of frame repeats, number of neurons
         if r < min_repeats:  # minimum number of frame repeats to be considered for oracle, free choice
             continue
-        assert np.all(np.abs(np.diff(inputs, axis=0)) == 0), "Images of oracle trials do not match"
+
+        assert np.all(np.abs(np.diff(inputs[:,:1, ...], axis=0)) == 0), "Images of oracle trials do not match"
         repeated_inputs.append(inputs)
         repeated_outputs.append(outputs)
     return np.array(repeated_inputs), np.array(repeated_outputs)
@@ -452,7 +454,7 @@ def get_mei_color_bias(mei):
     Returns:
         color_bias (float): A scalar, representing the color bias as computed in norm(channel 0) / norm(channel1).
     """
-    if mei.shape[1] != 2:
+    if mei.shape[1] < 2:
         raise ValueError("MEI color bias can only be computed for 2 color channels")
 
     color_bias = (torch.norm(mei[:, 0, ...]) / torch.norm(mei[:, 1, ...])).cpu().numpy()
