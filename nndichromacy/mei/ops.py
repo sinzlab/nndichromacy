@@ -1,4 +1,5 @@
 import warnings
+import numpy as np
 
 import torch
 import torch.nn.functional as F
@@ -7,6 +8,7 @@ from collections.abc import Iterable
 
 from mei.legacy.utils import varargin
 from ..tables.scores import MEINorm, MEINormBlue, MEINormGreen
+
 
 class BlurAndCut:
     """ Blur an image with a Gaussian window.
@@ -164,4 +166,37 @@ class ClipNormInChannel:
         x_norm = torch.norm(x[:, self.channel, ...])
         if x_norm > self.norm:
             x[:, self.channel, ...] = x[:, self.channel, ...] * (self.norm / x_norm)
+        return x
+
+
+class ChangeNormShuffleBehavior:
+    """ Change the norm of the input.
+
+    Arguments:
+        norm (float or tensor): Desired norm. If tensor, it should be the same length as
+            x.
+    """
+
+    def __init__(self,
+                 channel,
+                 norm,
+                 first_behav_channel,
+                 pupil_limits,
+                 dpupil_limits,
+                 treadmill_limits):
+
+        self.channel = channel
+        self.norm = norm
+        self.first_behav_channel = first_behav_channel
+        self.pupil_limits = pupil_limits
+        self.dpupil_limits = dpupil_limits
+        self.treadmill_limits = treadmill_limits
+
+    @varargin
+    def __call__(self, x, iteration=None):
+        x_norm = torch.norm(x[:, self.channel, ...])
+        x[:, self.channel, ...] = x[:, self.channel, ...] * (self.norm / x_norm)
+        x[:, self.first_behav_channel, ...] = np.random.uniform(self.pupil_limits[0], self.pupil_limits[1])
+        x[:, self.first_behav_channel+1, ...] = np.random.uniform(self.dpupil_limits[0], self.dpupil_limits[1])
+        x[:, self.first_behav_channel+2, ...] = np.random.uniform(self.treadmill_limits[0], self.treadmill_limits[1])
         return x
