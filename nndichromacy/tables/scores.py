@@ -1,11 +1,7 @@
 import datajoint as dj
-from nnfabrik.template import TrainedModelBase
-import tempfile
-import torch
-import os
+
 from nnfabrik.main import Model, Dataset, Trainer, Seed, Fabrikant
-from nnfabrik.utility.dj_helpers import gitlog, make_hash
-import numpy as np
+
 from ..utility.measures import (get_oracles,
                                 get_repeats,
                                 get_FEV,

@@ -1,14 +1,10 @@
 import datajoint as dj
-from nnfabrik.template import TrainedModelBase
-import tempfile
-import torch
-import os
+
 from nnfabrik.main import Model, Dataset, Trainer, Seed, Fabrikant
-from nnfabrik.utility.dj_helpers import gitlog, make_hash
-import numpy as np
+
 from ..utility.measures import get_oracles, get_model_rf_size, get_oracles_corrected, get_repeats, get_FEV, \
     get_explainable_var, get_correlations, get_poisson_loss, get_avg_correlations, get_predictions, get_targets, get_avg_firing
-from .from_nnfabrik import TrainedModel, ScoringTable
+
 from .from_mei import MEISelector, TrainedEnsembleModel
 from .from_nnfabrik import MeasuresTable, ScoringTable
 from .utility import DataCache, TrainedModelCache, EnsembleModelCache
