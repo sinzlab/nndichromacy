@@ -1,7 +1,7 @@
 import datajoint as dj
 try:
     # for pre-release nnfabrik
-    from nnfabrik.template import TrainedModelBase, ScoringBase, MeasuresBase
+    from nnfabrik.template import TrainedModelBase, ScoringBase, MeasuresBase, DataInfoBase
 except:
     # for versions >= 0.12.6
     from nnfabrik.templates.trained_model import TrainedModelBase
