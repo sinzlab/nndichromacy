@@ -125,7 +125,10 @@ def static_loader(
         more_transforms.insert(0, AddBehaviorAsChannels())
 
     if normalize:
-        more_transforms.insert(0, NeuroNormalizer(dat, exclude=exclude, inputs_mean=inputs_mean, inputs_std=inputs_std))
+        try:
+            more_transforms.insert(0, NeuroNormalizer(dat, exclude=exclude, inputs_mean=inputs_mean, inputs_std=inputs_std))
+        except:
+            more_transforms.insert(0, NeuroNormalizer(dat, exclude=exclude))
 
     if scale is not None:
         more_transforms.insert(0, ScaleInputs(scale=scale))
