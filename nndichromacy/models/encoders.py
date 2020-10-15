@@ -42,8 +42,11 @@ class Encoder(nn.Module):
         if eye_pos is not None and self.shifter is not None:
             shift = self.shifter[data_key](eye_pos)
 
-        sample = kwargs["sample"] if 'sample' in kwargs else None
-        x = self.readout(x, data_key=data_key, sample=sample, shift=shift)
+        if "sample" in kwargs:
+            x = self.readout(x, data_key=data_key, sample=kwargs["sample"], shift=shift)
+        else:
+            x = self.readout(x, data_key=data_key, shift=shift)
+
         return F.elu(x + self.offset) + 1
 
     def regularizer(self, data_key):
