@@ -1,0 +1,139 @@
+import datajoint as dj
+try:
+    # for pre-release nnfabrik
+    from nnfabrik.template import TrainedModelBase, ScoringBase, MeasuresBase, DataInfoBase
+except:
+    # for versions >= 0.12.6
+    from nnfabrik.templates.trained_model import TrainedModelBase
+    from nnfabrik.templates.scoring import ScoringBase, MeasuresBase
+    from nnfabrik.templates.utility import DataInfoBase
+
+from nnfabrik.utility.dj_helpers import gitlog, make_hash
+from nnfabrik.builder import resolve_data
+from nnfabrik.utility.dj_helpers import CustomSchema
+import os
+import pickle
+from ..utility.dj_helpers import get_default_args
+from ..datasets.mouse_loaders import static_loader
+
+schema = CustomSchema(dj.config.get('schema_name', 'nnfabrik_core'))
+
+
+@schema
+class DataInfo(DataInfoBase):
+
+    def create_stats_files(self, key=None, path=None):
+
+        if key == None:
+            key = self.fetch('KEY')
+
+            for restr in key:
+                dataset_config = (self.dataset_table & restr).fetch1("dataset_config")
+                image_cache_path = dataset_config.get("image_cache_path", None)
+                if image_cache_path is None:
+                    raise ValueError("The argument image_cache_path has to be specified in the dataset_config in order "
+                                     "to create the DataInfo")
+
+                image_cache_path = image_cache_path.split('individual')[0]
+                default_args = get_default_args(resolve_data((self.dataset_table & restr).fetch1("dataset_fn")))
+                default_args.update(dataset_config)
+                stats_filename = make_hash(default_args)
+                stats_path = os.path.join(path if path is not None else image_cache_path, 'statistics/', stats_filename)
+
+                if not os.path.exists(stats_path):
+                    data_info = (self & restr).fetch1("data_info")
+
+                    with open(stats_path, "wb") as pkl:
+                        pickle.dump(data_info, pkl)
+
+
+@schema
+class TrainedModel(TrainedModelBase):
+    table_comment = "Trained models"
+    data_info_table = DataInfo
+
+
+class ScoringTable(ScoringBase):
+    """
+    Overwrites the nnfabriks scoring template, to make it handle mouse repeat-dataloaders.
+    """
+    dataloader_function_kwargs = {}
+
+    def get_repeats_dataloaders(self, key=None, **kwargs):
+        if key is None:
+            key = self.fetch1('KEY')
+
+        dataset_config = (self.dataset_table()&key).fetch1("dataset_config")
+        dataset_config.update(kwargs)
+        dataloaders = static_loader(path=dataset_config.pop("paths")[0],
+                                    return_test_sampler=True,
+                                    **dataset_config)
+        return dataloaders
+
+    def get_model(self, key=None):
+        if self.model_cache is None:
+            model = self.trainedmodel_table().load_model(key=key,
+                                                         include_state_dict=True,
+                                                         include_dataloader=False)
+        else:
+            model = self.model_cache.load(key=key,
+                                          include_state_dict=True,
+                                          include_dataloader=False)
+        model.eval()
+        model.to("cuda")
+        return model
+
+    def make(self, key):
+
+        dataloaders = self.get_repeats_dataloaders(key=key, **self.dataloader_function_kwargs) if self.measure_dataset == 'test' else self.get_dataloaders(
+            key=key)
+        model = self.get_model(key=key)
+        unit_measures_dict = self.measure_function(model=model,
+                                                 dataloaders=dataloaders,
+                                                 device='cuda',
+                                                 as_dict=True,
+                                                 per_neuron=True,
+                                                 **self.function_kwargs)
+
+        key[self.measure_attribute] = self.get_avg_of_unit_dict(unit_measures_dict)
+        self.insert1(key, ignore_extra_fields=True)
+        self.insert_unit_measures(key=key, unit_measures_dict=unit_measures_dict)
+
+
+class SummaryScoringTable(ScoringTable):
+    """
+    A template scoring table with the same logic as ScoringBase, but for scores that do not have unit scores, but
+    an overall score per model only.
+    """
+    unit_table = None
+    Units = None
+
+    def make(self, key):
+
+        dataloaders = self.get_repeats_dataloaders(key=key, **self.dataloader_function_kwargs) if self.measure_dataset == 'test' else self.get_dataloaders(
+            key=key)
+        model = self.get_model(key=key)
+        key[self.measure_attribute] = self.measure_function(model=model,
+                                                            dataloaders=dataloaders,
+                                                            device='cuda',
+                                                            **self.function_kwargs)
+        self.insert1(key, ignore_extra_fields=True)
+
+
+class MeasuresTable(MeasuresBase, ScoringTable):
+    """
+    Overwrites the nnfabriks scoring template, to make it handle mouse repeat-dataloaders.
+    """
+    dataloader_function_kwargs = {}
+
+    def make(self, key):
+
+        dataloaders = ScoringTable.get_repeats_dataloaders(self, key=key, **self.dataloader_function_kwargs) if self.measure_dataset == 'test' else self.get_dataloaders(key=key)
+        unit_measures_dict = self.measure_function(dataloaders=dataloaders,
+                                                   as_dict=True,
+                                                   per_neuron=True,
+                                                   **self.function_kwargs)
+
+        key[self.measure_attribute] = self.get_avg_of_unit_dict(unit_measures_dict)
+        self.insert1(key, ignore_extra_fields=True)
+        self.insert_unit_measures(key=key, unit_measures_dict=unit_measures_dict)
