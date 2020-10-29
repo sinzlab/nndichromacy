@@ -4,9 +4,9 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from mlutils.measures import *
-from mlutils import measures as mlmeasures
-from mlutils.training import early_stopping, MultipleObjectiveTracker, LongCycler
+from neuralpredictors.measures import *
+from neuralpredictors import measures as mlmeasures
+from neuralpredictors.training import early_stopping, MultipleObjectiveTracker, LongCycler
 from nnfabrik.utility.nn_helpers import set_random_seed
 
 from ..utility import measures

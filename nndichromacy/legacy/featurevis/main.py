@@ -7,7 +7,7 @@ import torch
 from nnfabrik.main import Dataset, schema
 from nnfabrik.utility.dj_helpers import make_hash
 from . import integration
-from mlutils.data.datasets import StaticImageSet
+from neuralpredictors.data.datasets import StaticImageSet
 
 
 class TrainedEnsembleModelTemplate(dj.Manual):
