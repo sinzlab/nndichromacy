@@ -5,13 +5,13 @@ from torch.utils.data import DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 
 from nnfabrik.utility.nn_helpers import set_random_seed
-from mlutils.data.datasets import StaticImageSet, FileTreeDataset
+from neuralpredictors.data.datasets import StaticImageSet, FileTreeDataset
 try:
-    from mlutils.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel, ScaleInputs
+    from neuralpredictors.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel, ScaleInputs
 except:
-    from mlutils.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel
+    from neuralpredictors.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel
 
-from mlutils.data.samplers import SubsetSequentialSampler
+from neuralpredictors.data.samplers import SubsetSequentialSampler
 from .utility import get_oracle_dataloader
 from dataport.bcm.static import fetch_non_existing_data
 
