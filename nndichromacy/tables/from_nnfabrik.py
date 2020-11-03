@@ -12,8 +12,7 @@ from ..utility.dj_helpers import get_default_args
 from ..datasets.mouse_loaders import static_loader
 from .templates import ScoringBase, MeasuresBase, SummaryMeasuresBase, SummaryScoringBase
 
-
-schema = CustomSchema(dj.config.get('schema_name', 'nnfabrik_core'))
+schema = CustomSchema(dj.config.get("nnfabrik.schema_name", "nnfabrik_core"))
 
 
 @schema
@@ -62,6 +61,8 @@ class ScoringTable(ScoringBase):
 
         dataset_config = (self.dataset_table()&key).fetch1("dataset_config")
         dataset_config.update(kwargs)
+        if 'seed' in dataset_config:
+            dataset_config.pop('seed')
         dataloaders = static_loader(path=dataset_config.pop("paths")[0],
                                     return_test_sampler=True,
                                     **dataset_config)
