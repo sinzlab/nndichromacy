@@ -1,8 +1,8 @@
-from mlutils.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel
+from neuralpredictors.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel
 import numpy as np
 from torch.utils.data import DataLoader
-from mlutils.data.datasets import StaticImageSet
-from mlutils.data.samplers import RepeatsBatchSampler
+from neuralpredictors.data.datasets import StaticImageSet
+from neuralpredictors.data.samplers import RepeatsBatchSampler
 
 
 def get_oracle_dataloader(paths=None, seed=None, area='V1', layer='L2/3',

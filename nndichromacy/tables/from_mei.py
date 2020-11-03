@@ -18,7 +18,7 @@ Key = Dict[str, Any]
 Dataloaders = Dict[str, DataLoader]
 
 
-schema = CustomSchema(dj.config.get('schema_name', 'nnfabrik_core'))
+schema = CustomSchema(dj.config.get("nnfabrik.schema_name", "nnfabrik_core"))
 
 
 class MouseSelectorTemplate(dj.Computed):
