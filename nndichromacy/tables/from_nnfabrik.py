@@ -15,6 +15,18 @@ from .templates import ScoringBase, MeasuresBase, SummaryMeasuresBase, SummarySc
 schema = CustomSchema(dj.config.get("nnfabrik.schema_name", "nnfabrik_core"))
 
 
+if not 'stores' in dj.config:
+    dj.config['stores'] = {}
+dj.config['stores']['minio'] = {  # store in s3
+    'protocol': 's3',
+    'endpoint': os.environ.get('MINIO_ENDPOINT', 'DUMMY_ENDPOINT'),
+    'bucket': 'nnfabrik',
+    'location': 'dj-store',
+    'access_key': os.environ.get('MINIO_ACCESS_KEY', 'FAKEKEY'),
+    'secret_key': os.environ.get('MINIO_SECRET_KEY', 'FAKEKEY')
+}
+
+
 @schema
 class DataInfo(DataInfoBase):
 
@@ -47,6 +59,7 @@ class DataInfo(DataInfoBase):
 class TrainedModel(TrainedModelBase):
     table_comment = "Trained models"
     data_info_table = DataInfo
+    storage = "minio"
 
 
 class ScoringTable(ScoringBase):
