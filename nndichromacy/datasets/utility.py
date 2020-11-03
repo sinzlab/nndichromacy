@@ -6,11 +6,11 @@ import numpy as np
 from skimage.transform import rescale
 from collections import namedtuple, Iterable
 import os
-from mlutils.data.samplers import RepeatsBatchSampler
+from neuralpredictors.data.samplers import RepeatsBatchSampler
 import datajoint as dj
 
 from dataport.bcm.static import PreprocessedMouseData
-from mlutils.data.datasets import FileTreeDataset
+from neuralpredictors.data.datasets import FileTreeDataset
 from pathlib import Path
 import h5py
 from tqdm import tqdm
@@ -254,7 +254,7 @@ def get_cached_loader(image_ids, responses, batch_size, shuffle=True, image_cach
     return dataloader
 
 
-def add_h5_to_preprocessed_table(path, keys, comments, include_behavior=False):
+def add_h5_to_preprocessed_table(path, keys, comments, ignore_all_behaviors=True):
     """
     Args:
         path (str):     location of the h5 file to be added to the PreprocessedMouseData table.
@@ -280,7 +280,7 @@ def add_h5_to_preprocessed_table(path, keys, comments, include_behavior=False):
             print(datafile, fid['images'].shape)
 
     for datafile in datasets:
-        FileTreeDataset.initialize_from(datafile, include_behavior=include_behavior)
+        FileTreeDataset.initialize_from(datafile, ignore_all_behaviors=ignore_all_behaviors)
 
     for key in (experiment.Scan() & keys).fetch('KEY'):
         filename = (template + '/').format(**key)
