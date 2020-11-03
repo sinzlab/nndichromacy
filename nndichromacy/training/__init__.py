@@ -1,1 +1,1 @@
-from .trainers import standart_trainer
+from .trainers import standart_trainer, standard_trainer
