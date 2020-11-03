@@ -6,11 +6,11 @@ import numpy as np
 from skimage.transform import rescale
 from collections import namedtuple, Iterable
 import os
-from mlutils.data.samplers import RepeatsBatchSampler
+from neuralpredictors.data.samplers import RepeatsBatchSampler
 import datajoint as dj
 
 from dataport.bcm.static import PreprocessedMouseData
-from mlutils.data.datasets import FileTreeDataset
+from neuralpredictors.data.datasets import FileTreeDataset
 from pathlib import Path
 import h5py
 from tqdm import tqdm

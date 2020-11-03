@@ -1,8 +1,8 @@
 import warnings
 import numpy as np
 import torch
-from mlutils.measures import corr
-from mlutils.training import eval_state, device_state
+from neuralpredictors.measures import corr
+from neuralpredictors.training import eval_state, device_state
 import types
 from collections.abc import Iterable
 import contextlib

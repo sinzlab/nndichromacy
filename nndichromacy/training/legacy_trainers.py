@@ -6,8 +6,8 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from mlutils.measures import *
-from mlutils.training import early_stopping, MultipleObjectiveTracker, eval_state, LongCycler
+from neuralpredictors.measures import *
+from neuralpredictors.training import early_stopping, MultipleObjectiveTracker, eval_state, LongCycler
 from nnfabrik.utility.nn_helpers import set_random_seed
 
 from ..utility import measures
@@ -30,7 +30,7 @@ def early_stop_trainer(model, seed, stop_function='get_correlations',
                 'exp_stop'
                 'poisson_stop'
             loss_function: has to be a string that gets evaluated with eval()
-                Loss functions that are built in at mlutils that can
+                Loss functions that are built in at neuralpredictors that can
                 be selected in the trainer config are:
                     'PoissonLoss'
                     'GammaLoss'

@@ -2,9 +2,9 @@ import numpy as np
 import torch
 import copy
 
-from mlutils.layers.cores import Stacked2dCore, RotationEquivariant2dCore
-from mlutils.layers.legacy import Gaussian2d
-from mlutils.layers.readouts import PointPooled2d
+from neuralpredictors.layers.cores import Stacked2dCore, RotationEquivariant2dCore
+from neuralpredictors.layers.legacy import Gaussian2d
+from neuralpredictors.layers.readouts import PointPooled2d
 from nnfabrik.utility.nn_helpers import get_module_output, set_random_seed, get_dims_for_loader_dict
 from torch import nn
 from torch.nn import functional as F
@@ -24,7 +24,7 @@ class Encoder(nn.Module):
         self.readout = readout
         self.offset = elu_offset
         self.shifter = shifter
-        print("using new Encoder")
+        #print("using new Encoder")
 
 
     def forward(self, *args, data_key=None, eye_pos=None, shift=None, **kwargs):
