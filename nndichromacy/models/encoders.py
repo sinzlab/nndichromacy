@@ -24,7 +24,7 @@ class Encoder(nn.Module):
         self.readout = readout
         self.offset = elu_offset
         self.shifter = shifter
-        print("using new Encoder")
+        #print("using new Encoder")
 
 
     def forward(self, *args, data_key=None, eye_pos=None, shift=None, **kwargs):

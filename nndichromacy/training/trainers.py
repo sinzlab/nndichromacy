@@ -104,7 +104,7 @@ def standart_trainer(model, dataloaders, seed, avg_loss=False, scale_loss=True, 
 
         # print the quantities from tracker
         if verbose and tracker is not None:
-            print("=======================================")
+            print("=======================================", flush=True)
             for key in tracker.log.keys():
                 print(key, tracker.log[key][-1], flush=True)
 
@@ -114,6 +114,7 @@ def standart_trainer(model, dataloaders, seed, avg_loss=False, scale_loss=True, 
 
         # train over batches
         optimizer.zero_grad()
+        tqdm._instances.clear()
         for batch_no, (data_key, data) in tqdm(enumerate(LongCycler(dataloaders["train"])), total=n_iterations,
                                                desc="Epoch {}".format(epoch)):
 

@@ -7,9 +7,10 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from nnfabrik.utility.nn_helpers import set_random_seed
 from neuralpredictors.data.datasets import StaticImageSet, FileTreeDataset
 try:
-    from neuralpredictors.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel, ScaleInputs
+    from neuralpredictors.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel, ScaleInputs, AddPupilCenterAsChannels
 except:
     from neuralpredictors.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel
+
 
 from neuralpredictors.data.samplers import SubsetSequentialSampler
 from .utility import get_oracle_dataloader
@@ -120,6 +121,9 @@ def static_loader(
         idx = [np.where(dat.neurons.unit_ids == unit_id)[0][0] for unit_id in neuron_ids]
 
     more_transforms = [Subsample(idx), ToTensor(cuda)]
+
+    if include_eye_position:
+        more_transforms.insert(0, AddPupilCenterAsChannels())
 
     if include_behavior:
         more_transforms.insert(0, AddBehaviorAsChannels())
