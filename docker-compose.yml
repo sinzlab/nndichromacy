@@ -12,9 +12,8 @@ x-shared: &common
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - DEV_SOURCE=${DEV_SOURCE}
   volumes:
-    - .:/src
+    - .:/src/nndichromacy
     - ./notebooks:/notebooks
-    - ${DATA_PATH:-./data}:/data
   env_file:
     - .env
 
