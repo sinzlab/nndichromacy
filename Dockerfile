@@ -14,7 +14,7 @@ RUN git config --global credential.helper store &&\
 RUN git clone -b readout_position_regularizer https://github.com/${DEV_SOURCE}/neuralpredictors &&\
     git clone https://github.com/${DEV_SOURCE}/nnfabrik &&\
     git clone -b express_ensemble_loading https://github.com/${DEV_SOURCE}/mei &&\
-    git clone https://github.com/${DEV_SOURCE}/data_port &&\
+    git clone https://github.com/${DEV_SOURCE}/data_port
 
 
 FROM ${BASE_IMAGE}
