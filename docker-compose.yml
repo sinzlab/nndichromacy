@@ -16,6 +16,7 @@ x-shared: &common
     - ./notebooks:/notebooks
   env_file:
     - .env
+  runtime: nvidia
 
 services:
   notebook:
