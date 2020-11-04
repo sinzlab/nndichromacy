@@ -4,8 +4,6 @@ x-build: &build
   dockerfile: Dockerfile
 
 x-shared: &common
-  image: base-build
-  ipc: host
   build:
     context: .
     dockerfile: Dockerfile
