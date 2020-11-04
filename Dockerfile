@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=sinzlab/pytorch
+ARG ***REMOVED***
 
 # Perform multistage build to pull private repo without leaving behind
 # private information (e.g. SSH key, Git token)
@@ -25,4 +25,4 @@ RUN pip install -e /src/neuralpredictors &&\
     pip install -e /src/nnfabrik &&\
     pip install -e /src/nndichromacy &&\
     pip install -e /src/mei &&\
-    pip install -e /src/data_port &&\
+    pip install -e /src/data_port
