@@ -14,9 +14,9 @@ x-shared: &common
   volumes:
     - .:/src/nndichromacy
     - ./notebooks:/notebooks
+    - /mnt/scratch07/color_mei:/data
   env_file:
     - .env
-  runtime: nvidia
 
 services:
   notebook:
