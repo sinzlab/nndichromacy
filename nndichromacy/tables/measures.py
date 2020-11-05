@@ -13,7 +13,7 @@ from nnfabrik.builder import resolve_model
 from nnfabrik.utility.dj_helpers import CustomSchema
 from ..utility.dj_helpers import get_default_args
 
-schema = CustomSchema(dj.config.get('schema_name', 'nnfabrik_core'))
+schema = CustomSchema(dj.config.get('nnfabrik.schema_name', 'nnfabrik_core'))
 
 
 @schema
