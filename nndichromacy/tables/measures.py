@@ -5,15 +5,15 @@ from nnfabrik.main import Model, Dataset, Trainer, Seed, Fabrikant
 from ..utility.measures import get_oracles, get_model_rf_size, get_oracles_corrected, get_repeats, get_FEV, \
     get_explainable_var, get_correlations, get_poisson_loss, get_avg_correlations, get_predictions, get_targets, get_avg_firing
 
-from .from_mei import MEISelector, TrainedEnsembleModel
-from .from_nnfabrik import MeasuresTable, ScoringTable
+from .from_mei import MEISelector
+from .from_nnfabrik import MeasuresTable, SummaryMeasuresBase
+
 from .utility import DataCache, TrainedModelCache, EnsembleModelCache
 from nnfabrik.builder import resolve_model
 from nnfabrik.utility.dj_helpers import CustomSchema
-from nnfabrik.template import ScoringBase, SummaryScoringBase, MeasuresBase, SummaryMeasuresBase
 from ..utility.dj_helpers import get_default_args
 
-schema = CustomSchema(dj.config.get('schema_name', 'nnfabrik_core'))
+schema = CustomSchema(dj.config.get('nnfabrik.schema_name', 'nnfabrik_core'))
 
 
 @schema
