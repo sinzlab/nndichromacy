@@ -49,6 +49,18 @@ class TestCorrelation(ScoringTable):
 
 
 @schema
+class ValidationCorrelation(ScoringTable):
+    trainedmodel_table = TrainedModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_correlations)
+    measure_dataset = "validation"
+    measure_attribute = "validation_correlation"
+    data_cache = DataCache
+    model_cache = TrainedModelCache
+
+
+@schema
 class TestCorrelationBlueTestSet(ScoringTable):
     trainedmodel_table = TrainedModel
     dataset_table = Dataset
