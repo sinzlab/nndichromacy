@@ -2,4 +2,4 @@ FROM ninai/pipeline
 
 RUN git clone https://github.com/cajal/pipeline.git /src/pipeline
 
-RUN pip install --upgrade -e /src/pipeline
+RUN pip3 install --update -e /src/pipeline
