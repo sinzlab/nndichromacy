@@ -24,8 +24,10 @@ services:
     ports:
       - "8888:8888"
 
-  pipeline:
+  pipeline:ls
+
     build:
+      context: .
       dockerfile: Dockerfile_pipeline
     env_file:
       - .env_pipeline
