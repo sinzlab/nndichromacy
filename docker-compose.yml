@@ -23,3 +23,11 @@ services:
     <<: *common
     ports:
       - "8888:8888"
+
+  pipeline:
+    build:
+      dockerfile: Dockerfile_pipeline
+    env_file:
+      - .env_pipeline
+    ports:
+      - "8888:8888"
