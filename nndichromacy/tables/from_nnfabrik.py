@@ -4,6 +4,7 @@ from nnfabrik.templates.trained_model import TrainedModelBase, DataInfoBase
 from nnfabrik.utility.dj_helpers import gitlog, make_hash
 from nnfabrik.builder import resolve_data
 from nnfabrik.utility.dj_helpers import CustomSchema
+from nnfabrik.main import Dataset, Trainer, Model, Fabrikant, Seed
 
 import os
 import pickle
@@ -59,6 +60,12 @@ class TrainedModel(TrainedModelBase):
     table_comment = "Trained models"
     data_info_table = DataInfo
     storage = "minio"
+
+    model_table = Model
+    dataset_table = Dataset
+    trainer_table = Trainer
+    seed_table = Seed
+    user_table = Fabrikant
 
 
 class ScoringTable(ScoringBase):
