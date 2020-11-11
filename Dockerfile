@@ -15,7 +15,8 @@ RUN git clone -b readout_position_regularizer https://github.com/KonstantinWille
     git clone https://github.com/sinzlab/nnfabrik &&\
     git clone -b express_ensemble_loading https://github.com/KonstantinWilleke/mei &&\
     git clone https://github.com/sinzlab/data_port &&\
-    git clone https://github.com/katrinfranke/nexport.git
+    git clone https://github.com/sinzlab/nexport.git
+RUN pip install opencv-python
 
 FROM ${BASE_IMAGE}
 COPY --from=base /src /src
@@ -27,5 +28,4 @@ RUN pip install -e /src/neuralpredictors &&\
     pip install -e /src/mei &&\
     pip install -e /src/data_port &&\
     pip install -e /src/nexport &&\
-    pip install opencv-python
 
