@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from mei.initial import InitialGuessCreator
 from torch import Tensor, randn
-
+from .utility import cumstom_initial_guess
+from functools import partial
 
 class RandomNormalBehavior(InitialGuessCreator):
     """Used to create an initial guess tensor filled with values distributed according to a normal distribution."""
@@ -24,3 +25,6 @@ class RandomNormalBehavior(InitialGuessCreator):
 
     def __repr__(self):
         return f"{self.__class__.__qualname__}()"
+
+
+eightbit_initial_guess = partial(cumstom_initial_guess, mean=111, std=60)
