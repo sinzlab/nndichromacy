@@ -16,11 +16,12 @@ RUN git clone -b readout_position_regularizer https://github.com/KonstantinWille
     git clone -b express_ensemble_loading https://github.com/KonstantinWilleke/mei &&\
     git clone https://github.com/sinzlab/data_port &&\
     git clone https://github.com/sinzlab/nexport.git
-RUN pip install opencv-python
 
 FROM ${BASE_IMAGE}
 COPY --from=base /src /src
 ADD . /src/nndichromacy
+
+RUN pip install opencv-python
 
 RUN pip install -e /src/neuralpredictors &&\
     pip install -e /src/nnfabrik &&\
