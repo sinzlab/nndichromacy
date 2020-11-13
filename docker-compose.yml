@@ -15,6 +15,7 @@ x-shared: &common
     - .:/src/nndichromacy
     - ./notebooks:/notebooks
     - /mnt/scratch07/color_mei:/data
+    - /mnt/scratch07/nexport:/nexport
   env_file:
     - .env
 
@@ -35,6 +36,23 @@ services:
       - /mnt:/mnt
     ports:
       - "8888:8888"
+    entrypoint:
+      - jupyter
+      - lab
+      - --ip=0.0.0.0
+      - --allow-root
+      - --NotebookApp.token=''
+      - --no-browser
+
+  nexport:
+    <<: *common
+    ports:
+      - "8888:8888"
+    env_file:
+      - .env_pipeline
+    volumes:
+      - ./notebooks:/notebooks
+      - /mnt:/mnt
     entrypoint:
       - jupyter
       - lab
