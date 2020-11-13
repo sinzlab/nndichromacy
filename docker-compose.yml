@@ -15,6 +15,7 @@ x-shared: &common
     - .:/src/nndichromacy
     - ./notebooks:/notebooks
     - /mnt/scratch07/color_mei:/data
+    - /mnt/scratch07/nexport:/nexport
   env_file:
     - .env
 

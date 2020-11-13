@@ -21,12 +21,10 @@ FROM ${BASE_IMAGE}
 COPY --from=base /src /src
 ADD . /src/nndichromacy
 
-RUN pip install opencv-python
-
 RUN pip install -e /src/neuralpredictors &&\
     pip install -e /src/nnfabrik &&\
     pip install -e /src/nndichromacy &&\
     pip install -e /src/mei &&\
     pip install -e /src/data_port &&\
-    pip install -e /src/nexport &&\
+    pip install -e /src/nexport
 
