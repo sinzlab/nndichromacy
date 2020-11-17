@@ -39,10 +39,13 @@ class RandomNormalSelectedChannels(InitialGuessCreator):
 
     def __init__(self, selected_channels, selected_values):
         if not isinstance(selected_channels, Iterable):
-            self.selected_channels = (selected_channels)
+            selected_channels = (selected_channels)
 
         if not isinstance(selected_values, Iterable):
-            self.selected_values = (selected_values)
+            selected_values = (selected_values)
+
+        self.selected_channels = selected_channels
+        self.selected_values = selected_values
 
     def __call__(self, *shape):
         """Creates a random initial guess from which to start the MEI optimization process given a shape."""
