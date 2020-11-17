@@ -104,6 +104,50 @@ def get_avg_correlations(model, dataloaders, device='cpu', as_dict=False, per_ne
     return correlations
 
 
+def get_conservative_avg_correlations(model, dataloaders, device='cpu', as_dict=False, per_neuron=True):
+    """
+    Returns correlation between model outputs and average responses over repeated trials
+
+    """
+    if 'test' in dataloaders:
+        dataloaders = dataloaders['test']
+
+    correlations = {}
+
+    for k, loader in dataloaders.items():
+
+        # Compute correlation with average targets
+        target, output = model_predictions_repeats(dataloader=loader,
+                                                   model=model,
+                                                   data_key=k,
+                                                   device=device,
+                                                   broadcast_to_target=False)
+
+        images = len(target)
+        neurons = len(target[0][0])
+
+        target_mean, output_mean = np.zeros((images, neurons)), np.zeros((images, neurons))
+
+        for i, (t, o) in enumerate(zip(target, output)):
+            split = len(t) // 2
+
+            target_mean[i] = t[:split].mean(axis=0)
+            output_mean[i] = o[split:].mean(axis=0)
+
+        correlations[k] = corr(target_mean, output_mean, axis=0)
+
+        # Check for nans
+        if np.any(np.isnan(correlations[k])):
+            warnings.warn('{}% NaNs , NaNs will be set to Zero.'.format(np.isnan(correlations[k]).mean() * 100))
+        correlations[k][np.isnan(correlations[k])] = 0
+
+    if not as_dict:
+        correlations = np.hstack([v for v in correlations.values()]) if per_neuron else np.mean(
+            np.hstack([v for v in correlations.values()]))
+
+    return correlations
+
+
 def get_correlations(model, dataloaders, device='cpu', as_dict=False, per_neuron=True, **kwargs):
     correlations = {}
     with eval_state(model) if not is_ensemble_function(model) else contextlib.nullcontext():
