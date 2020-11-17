@@ -13,7 +13,8 @@ from ..utility.measures import (get_oracles,
                                 get_targets,
                                 get_fraction_oracles,
                                 get_mei_norm,
-                                get_mei_color_bias)
+                                get_mei_color_bias,
+                                get_conservative_avg_correlations)
 from .from_nnfabrik import TrainedModel, ScoringTable, SummaryScoringTable
 from .from_mei import MEISelector, TrainedEnsembleModel
 from .utility import DataCache, TrainedModelCache, EnsembleModelCache
@@ -32,6 +33,18 @@ class CorrelationToAverge(ScoringTable):
     measure_function = staticmethod(get_avg_correlations)
     measure_dataset = "test"
     measure_attribute = "avg_correlation"
+    data_cache = DataCache
+    model_cache = TrainedModelCache
+
+
+@schema
+class CorrelationToAvgConservative(ScoringTable):
+    trainedmodel_table = TrainedModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_conservative_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_correlation_cons"
     data_cache = DataCache
     model_cache = TrainedModelCache
 
