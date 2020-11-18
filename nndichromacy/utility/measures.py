@@ -8,6 +8,7 @@ from collections.abc import Iterable
 import contextlib
 import warnings
 from .measure_helpers import get_subset_of_repeats, is_ensemble_function
+from itertools import combinations
 
 
 def model_predictions_repeats(model, dataloader, data_key, device='cuda', broadcast_to_target=False):
@@ -106,7 +107,7 @@ def get_avg_correlations(model, dataloaders, device='cpu', as_dict=False, per_ne
 
 def get_conservative_avg_correlations(model, dataloaders, device='cpu', as_dict=False, per_neuron=True):
     """
-    Returns correlation between model outputs and average responses over repeated trials
+    Returns more conservative average correlation between model outputs and responses over repeated trials
 
     """
     if 'test' in dataloaders:
@@ -123,16 +124,37 @@ def get_conservative_avg_correlations(model, dataloaders, device='cpu', as_dict=
                                                    device=device,
                                                    broadcast_to_target=False)
 
+        np.random.seed(222)
+
+        # number of splits to compute the
+        n_splits = 20
+
         images = len(target)
         neurons = len(target[0][0])
 
         target_mean, output_mean = np.zeros((images, neurons)), np.zeros((images, neurons))
 
         for i, (t, o) in enumerate(zip(target, output)):
-            split = len(t) // 2
 
-            target_mean[i] = t[:split].mean(axis=0)
-            output_mean[i] = o[split:].mean(axis=0)
+            repeats = len(t)
+            split = repeats // 2
+
+            possible_splits = np.asarray(list(combinations(np.arange(repeats), split)))
+            target_idx = np.random.choice(possible_splits.shape[0], n_splits)
+
+            # compute mean per split
+            target_mean_splits = np.vstack([np.take(t, possible_splits[idx], axis=0).mean(axis=0) for idx in target_idx])
+
+            output_splits = np.zeros((n_splits, repeats-split))
+            for n, idx in enumerate(target_idx):
+                output_splits[n] = [j for j in range(repeats) if not j in possible_splits[idx]]
+            output_splits = output_splits.astype(int)
+
+            output_mean_splits = np.vstack([np.take(o, split, axis=0).mean(axis=0) for split in output_splits])
+
+            # compute mean across splits
+            target_mean[i] = target_mean_splits.mean(axis=0)
+            output_mean[i] = output_mean_splits.mean(axis=0)
 
         correlations[k] = corr(target_mean, output_mean, axis=0)
 
