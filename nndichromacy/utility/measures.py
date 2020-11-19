@@ -81,7 +81,7 @@ def get_avg_correlations(model, dataloaders, device='cpu', as_dict=False, per_ne
     """
     if 'test' in dataloaders:
         dataloaders = dataloaders['test']
-    
+
     correlations = {}
     for k, loader in dataloaders.items():
 
@@ -123,18 +123,17 @@ def get_conservative_avg_correlations(model, dataloaders, device='cpu', as_dict=
                                                    model=model,
                                                    data_key=k,
                                                    device=device,
-                                                   broadcast_to_target=False)
+                                                   broadcast_to_target=True)
 
         np.random.seed(222)
 
-        # number of splits to compute the
+        # number of splits to compute the mean correlation with
         n_splits = 20
 
         images = len(target)
         neurons = len(target[0][0])
 
-        target_mean, output_mean = np.zeros((images, neurons)), np.zeros((images, neurons))
-
+        target_resp, output_pred = [], []
         for i, (t, o) in enumerate(zip(target, output)):
 
             repeats = len(t)
@@ -145,6 +144,7 @@ def get_conservative_avg_correlations(model, dataloaders, device='cpu', as_dict=
 
             # compute mean per split
             target_mean_splits = np.vstack([np.take(t, possible_splits[idx], axis=0).mean(axis=0) for idx in target_idx])
+            target_resp.append(target_mean_splits)
 
             output_splits = np.zeros((n_splits, repeats-split))
             for n, idx in enumerate(target_idx):
@@ -152,12 +152,13 @@ def get_conservative_avg_correlations(model, dataloaders, device='cpu', as_dict=
             output_splits = output_splits.astype(int)
 
             output_mean_splits = np.vstack([np.take(o, split, axis=0).mean(axis=0) for split in output_splits])
+            output_pred.append(output_mean_splits)
 
-            # compute mean across splits
-            target_mean[i] = target_mean_splits.mean(axis=0)
-            output_mean[i] = output_mean_splits.mean(axis=0)
 
-        correlations[k] = corr(target_mean, output_mean, axis=0)
+        target_resp = np.stack(target_resp)
+        output_pred = np.stack(output_pred)
+
+        correlations[k] = corr(target_resp, output_pred, axis=0).mean(axis=0)
 
         # Check for nans
         if np.any(np.isnan(correlations[k])):
