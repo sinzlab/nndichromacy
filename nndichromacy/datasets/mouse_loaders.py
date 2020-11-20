@@ -122,6 +122,9 @@ def static_loader(
 
     more_transforms = [Subsample(idx), ToTensor(cuda)]
 
+    if select_input_channel is not None:
+        more_transforms.insert(0, SelectInputChannel(select_input_channel))
+
     if include_eye_position:
         more_transforms.insert(0, AddPupilCenterAsChannels())
 
@@ -137,9 +140,6 @@ def static_loader(
     if scale is not None:
         more_transforms.insert(0, ScaleInputs(scale=scale))
 
-
-    if select_input_channel is not None:
-        more_transforms.insert(0, SelectInputChannel(select_input_channel))
     dat.transforms.extend(more_transforms)
 
     # create the data_key for a specific data path

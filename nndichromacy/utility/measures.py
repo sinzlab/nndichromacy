@@ -33,7 +33,7 @@ def model_predictions_repeats(model, dataloader, data_key, device='cuda', broadc
         unique_images = torch.cat((unique_images, images[0:1, ].to(device)), dim=0)
         target.append(responses.detach().cpu().numpy())
 
-        if len(batch) > 2 and images.shape[1] > 3:
+        if len(batch) > 2:
             with eval_state(model) if not is_ensemble_function(model) else contextlib.nullcontext():
                 with device_state(model, device) if not is_ensemble_function(model) else contextlib.nullcontext():
                     output.append(model(images.to(device), data_key=data_key).detach().cpu().numpy())

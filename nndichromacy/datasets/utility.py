@@ -254,7 +254,7 @@ def get_cached_loader(image_ids, responses, batch_size, shuffle=True, image_cach
     return dataloader
 
 
-def add_h5_to_preprocessed_table(path, keys, comments, ignore_all_behaviors=True):
+def add_h5_to_preprocessed_table(path, keys, comments, ignore_all_behaviors=True, filenames=None):
     """
     Args:
         path (str):     location of the h5 file to be added to the PreprocessedMouseData table.
@@ -268,22 +268,30 @@ def add_h5_to_preprocessed_table(path, keys, comments, ignore_all_behaviors=True
     """
 
     experiment = dj.create_virtual_module('experiment', 'sinzlab_houston_data')
-
     filename_template = 'static{animal_id}-{session}-{scan_idx}-preproc0'
     template = os.path.join(path, filename_template)
-    datasets = [(template + '.h5').format(**k)
-                for k in (experiment.Scan() & keys).fetch('KEY')]
+    if filenames is None:
+        datasets = [(template + '.h5').format(**k)
+                    for k in (experiment.Scan() & keys).fetch('KEY')]
+    else:
+        datasets = filenames
 
+    print(datasets)
     for datafile in datasets:
         print(datafile)
-        with h5py.File(datafile) as fid:
-            print(datafile, fid['images'].shape)
+        if datafile.endswith('.h5'):
+            with h5py.File(datafile) as fid:
+                print(datafile, fid['images'].shape)
 
     for datafile in datasets:
-        FileTreeDataset.initialize_from(datafile, ignore_all_behaviors=ignore_all_behaviors)
+        if datafile.endswith('.h5'):
+            FileTreeDataset.initialize_from(datafile, ignore_all_behaviors=ignore_all_behaviors)
 
     for key in (experiment.Scan() & keys).fetch('KEY'):
-        filename = (template + '/').format(**key)
+        if filenames is None:
+            filename = (template + '/').format(**key)
+        else:
+            filename = datasets[0].split('.')[0]+'/'
         print(filename)
         dat = FileTreeDataset(filename, 'images', 'responses')
         dat.add_link('responses', 'targets')
@@ -292,7 +300,11 @@ def add_h5_to_preprocessed_table(path, keys, comments, ignore_all_behaviors=True
 
     for key in (experiment.Scan() & keys).fetch('KEY'):
         print(key)
-        filename = (template + '/').format(**key)
+        if filenames is None:
+            filename = (template + '/').format(**key)
+        else:
+            filename = datasets[0].split('.')[0] + '/'
+        print(filename)
         dat = FileTreeDataset(filename, 'images', 'responses')
         ai, se, si, ui, x, y, z = (experiment.ScanSet.UnitInfo & key).fetch('animal_id', 'session', 'scan_idx',
                                                                             'unit_id', 'um_x', 'um_y', 'um_z')
@@ -300,14 +312,21 @@ def add_h5_to_preprocessed_table(path, keys, comments, ignore_all_behaviors=True
         dat.add_neuron_meta('cell_motor_coordinates', ai, se, si, ui, p)
 
     for key in (experiment.Scan() & keys).proj():
-        filename = (template + '/').format(**key)
+        if filenames is None:
+            filename = (template + '/').format(**key)
+        else:
+            filename = datasets[0].split('.')[0] + '/'
+        print(filename)
         dat = FileTreeDataset(filename, 'images', 'responses')
         dat.zip()
 
-    filenames = []
-    for i, key in enumerate((experiment.Scan() & keys).proj()):
-        filename = Path((template + '.zip').format(**key))
-        PreprocessedMouseData().fill(filename.name, comment=comments[i])
-        filenames.append(filename.name)
+    if filenames is not None:
+        PreprocessedMouseData().fill(filenames[0], comment=comments[0])
+    else:
+        filenames = []
+        for i, key in enumerate((experiment.Scan() & keys).proj()):
+            filename = Path((template + '.zip').format(**key))
+            PreprocessedMouseData().fill(filename.name, comment=comments[i])
+            filenames.append(filename.name)
 
     return filenames
