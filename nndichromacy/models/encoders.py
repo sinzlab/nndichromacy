@@ -27,17 +27,16 @@ class Encoder(nn.Module):
         #print("using new Encoder")
 
 
-    def forward(self, *args, data_key=None, eye_pos=None, shift=None, **kwargs):
+    def forward(self, *args, data_key=None, **kwargs):
 
         x = self.core(args[0])
 
-        if len(args) == 3:
-            if args[2].shape[1] == 2:
-                eye_pos = args[2]
-
-        if len(args) == 4:
-            if args[3].shape[1] == 2:
-                eye_pos = args[3]
+        eye_pos, shift = None, None
+        if len(args) > 2:
+            if hasattr(args[-1], 'shape'):
+                if len(args[-1].shape) == 2:
+                    if args[-1].shape[1] == 2:
+                        eye_pos = args[2]
 
         if eye_pos is not None and self.shifter is not None:
             shift = self.shifter[data_key](eye_pos)
