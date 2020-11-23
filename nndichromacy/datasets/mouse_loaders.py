@@ -44,6 +44,7 @@ def static_loader(
     inputs_std=None,
     scale: float=None,
     include_eye_position=None,
+    add_eye_pos_as_channels=None,
 ):
     """
     returns a single data loader
@@ -125,7 +126,7 @@ def static_loader(
     if select_input_channel is not None:
         more_transforms.insert(0, SelectInputChannel(select_input_channel))
 
-    if include_eye_position:
+    if add_eye_pos_as_channels:
         more_transforms.insert(0, AddPupilCenterAsChannels())
 
     if include_behavior:
