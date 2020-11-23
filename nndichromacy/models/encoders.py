@@ -36,7 +36,7 @@ class Encoder(nn.Module):
             if hasattr(args[-1], 'shape'):
                 if len(args[-1].shape) == 2:
                     if args[-1].shape[1] == 2:
-                        eye_pos = args[2]
+                        eye_pos = args[-1]
 
         if eye_pos is not None and self.shifter is not None:
             shift = self.shifter[data_key](eye_pos)
