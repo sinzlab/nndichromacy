@@ -20,3 +20,4 @@ secrets/
 *.gif
 .vscode
 .env
+.env_pipeline
