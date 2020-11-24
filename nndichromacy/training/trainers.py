@@ -114,10 +114,11 @@ def standart_trainer(model, dataloaders, seed, avg_loss=False, scale_loss=True, 
 
         # train over batches
         optimizer.zero_grad()
-        tqdm._instances.clear()
+        if hasattr(tqdm, '_instances'):
+            tqdm._instances.clear()
+
         for batch_no, (data_key, data) in tqdm(enumerate(LongCycler(dataloaders["train"])), total=n_iterations,
                                                desc="Epoch {}".format(epoch)):
-
             loss = full_objective(model, dataloaders["train"], data_key, *data)
             loss.backward()
             if (batch_no + 1) % optim_step_count == 0:
