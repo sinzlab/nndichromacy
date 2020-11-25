@@ -24,14 +24,11 @@ class Encoder(nn.Module):
         self.readout = readout
         self.offset = elu_offset
         self.shifter = shifter
-        #print("using new Encoder")
 
 
-    def forward(self, *args, data_key=None, shift=None, **kwargs):
+    def forward(self, *args, data_key=None, eye_pos=None, shift=None, **kwargs):
 
         x = self.core(args[0])
-
-        eye_pos = None
         if len(args) > 2:
             if hasattr(args[-1], 'shape'):
                 if len(args[-1].shape) == 2:
@@ -39,6 +36,9 @@ class Encoder(nn.Module):
                         eye_pos = args[-1]
 
         if eye_pos is not None and self.shifter is not None:
+            if not isinstance(eye_pos, torch.Tensor):
+                eye_pos = torch.tensor(eye_pos)
+            eye_pos.to(x.device).to(dtype=x.dtype)
             shift = self.shifter[data_key](eye_pos)
 
         if "sample" in kwargs:
