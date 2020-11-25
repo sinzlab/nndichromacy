@@ -108,6 +108,17 @@ class TestCorrelationDependenthighMSE(ScoringTable):
     dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb')
 
 
+@schema
+class FEVeScore(ScoringTable):
+    trainedmodel_table = TrainedModel
+    unit_table = MEISelector
+    measure_function = staticmethod(get_FEV)
+    measure_dataset = "test"
+    measure_attribute = "feve"
+    data_cache = DataCache
+    model_cache = TrainedModelCache
+
+
 ##### ============ Ensemble Scores ============ #####
 
 
