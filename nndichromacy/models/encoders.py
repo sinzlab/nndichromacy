@@ -38,7 +38,7 @@ class Encoder(nn.Module):
         if eye_pos is not None and self.shifter is not None:
             if not isinstance(eye_pos, torch.Tensor):
                 eye_pos = torch.tensor(eye_pos)
-            eye_pos.to(x.device).to(dtype=x.dtype)
+            eye_pos = eye_pos.to(x.device).to(dtype=x.dtype)
             shift = self.shifter[data_key](eye_pos)
 
         if "sample" in kwargs:
