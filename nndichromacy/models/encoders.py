@@ -26,19 +26,37 @@ class Encoder(nn.Module):
         self.shifter = shifter
 
 
-    def forward(self, *args, data_key=None, eye_pos=None, shift=None, **kwargs):
+    def forward(self, *args, data_key=None, eye_pos=None, shift=None, trial_idx=None, **kwargs):
 
         x = self.core(args[0])
         if len(args) > 2:
-            if hasattr(args[-1], 'shape'):
-                if len(args[-1].shape) == 2:
-                    if args[-1].shape[1] == 2:
-                        eye_pos = args[-1]
+            for j in range(2, len(args)):
+                if hasattr(args[j], 'shape'):
+                    if len(args[j].shape) == 2:
+                        if args[j].shape[1] == 2:
+                            eye_pos = args[j]
+                        elif args[j].shape[1] == 1:
+                            trial_idx = args[j]
+
+        if "pupil_center" in kwargs:
+            eye_pos = kwargs["pupil_center"]
+
+        if "trial_idx" in kwargs:
+            trial_idx = kwargs["trial_idx"]
 
         if eye_pos is not None and self.shifter is not None:
             if not isinstance(eye_pos, torch.Tensor):
                 eye_pos = torch.tensor(eye_pos)
             eye_pos = eye_pos.to(x.device).to(dtype=x.dtype)
+
+            if trial_idx is not None:
+                if not isinstance(trial_idx, torch.Tensor):
+                    trial_idx = torch.tensor(trial_idx)
+                trial_idx = trial_idx.to(x.device).to(dtype=x.dtype)
+
+                if self.shifter[data_key].mlp[0].in_features == 3:
+                    eye_pos = torch.cat((eye_pos, trial_idx), dim=1)
+
             shift = self.shifter[data_key](eye_pos)
 
         if "sample" in kwargs:
