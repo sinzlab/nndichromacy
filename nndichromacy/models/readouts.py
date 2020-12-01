@@ -1,18 +1,7 @@
 import torch
-
-from torch import nn
-from nnfabrik.utility.nn_helpers import get_io_dims, get_module_output, set_random_seed, get_dims_for_loader_dict
-from collections import OrderedDict, Iterable
-import numpy as np
-import warnings
-from torch.nn import Parameter
-from torch.nn import functional as F
-from torch.nn import ModuleDict
-from neuralpredictors.constraints import positive
-from neuralpredictors.layers.cores import DepthSeparableConv2d, Core2d, Stacked2dCore
-from neuralpredictors import regularizers
-from neuralpredictors.layers.readouts import PointPooled2d, FullGaussian2d, SpatialXFeatureLinear
 from neuralpredictors.layers.legacy import Gaussian2d
+from neuralpredictors.layers.readouts import PointPooled2d, FullGaussian2d, SpatialXFeatureLinear, RemappedGaussian2d
+from nnfabrik.utility.nn_helpers import get_module_output
 
 
 class MultiplePointPooled2d(torch.nn.ModuleDict):
@@ -101,7 +90,7 @@ class MultipleSpatialXFeatureLinear(MultiReadout, torch.nn.ModuleDict):
 class MultipleFullGaussian2d(MultiReadout, torch.nn.ModuleDict):
     def __init__(self, core, in_shape_dict, n_neurons_dict, init_mu_range, init_sigma, bias, gamma_readout,
                  gauss_type, grid_mean_predictor, grid_mean_predictor_type, source_grids,
-                 share_features, share_grid, shared_match_ids,):
+                 share_features, share_grid, shared_match_ids, ):
         # super init to get the _module attribute
         super().__init__()
         k0 = None
@@ -118,7 +107,7 @@ class MultipleFullGaussian2d(MultiReadout, torch.nn.ModuleDict):
                     source_grid = source_grids[k]
                 else:
                     raise KeyError('grid mean predictor {} does not exist'.format(grid_mean_predictor_type))
-                
+
             elif share_grid:
                 shared_grid = {
                     'match_ids': shared_match_ids[k],
@@ -136,6 +125,61 @@ class MultipleFullGaussian2d(MultiReadout, torch.nn.ModuleDict):
             self.add_module(k, FullGaussian2d(
                 in_shape=in_shape,
                 outdims=n_neurons,
+                init_mu_range=init_mu_range,
+                init_sigma=init_sigma,
+                bias=bias,
+                gauss_type=gauss_type,
+                grid_mean_predictor=grid_mean_predictor,
+                shared_features=shared_features,
+                shared_grid=shared_grid,
+                source_grid=source_grid,
+            )
+                            )
+        self.gamma_readout = gamma_readout
+
+
+class MultipleRemappedGaussian2d(MultiReadout, torch.nn.ModuleDict):
+    def __init__(self, core, in_shape_dict, n_neurons_dict, remap_layers, remap_kernel, max_remap_amplitude,
+                 init_mu_range, init_sigma, bias, gamma_readout,
+                 gauss_type, grid_mean_predictor, grid_mean_predictor_type, source_grids,
+                 share_features, share_grid, shared_match_ids, ):
+        # super init to get the _module attribute
+        super().__init__()
+        k0 = None
+        for i, k in enumerate(n_neurons_dict):
+            k0 = k0 or k
+            in_shape = get_module_output(core, in_shape_dict[k])[1:]
+            n_neurons = n_neurons_dict[k]
+
+            source_grid = None
+            shared_grid = None
+            shared_transform = None
+            if grid_mean_predictor is not None:
+                if grid_mean_predictor_type == 'cortex':
+                    source_grid = source_grids[k]
+                else:
+                    raise KeyError('grid mean predictor {} does not exist'.format(grid_mean_predictor_type))
+
+            elif share_grid:
+                shared_grid = {
+                    'match_ids': shared_match_ids[k],
+                    'shared_grid': None if i == 0 else self[k0].shared_grid
+                }
+
+            if share_features:
+                shared_features = {
+                    'match_ids': shared_match_ids[k],
+                    'shared_features': None if i == 0 else self[k0].shared_features
+                }
+            else:
+                shared_features = None
+
+            self.add_module(k, RemappedGaussian2d(
+                in_shape=in_shape,
+                outdims=n_neurons,
+                remap_layers=remap_layers,
+                remap_kernel=remap_kernel,
+                max_remap_amplitude=max_remap_amplitude,
                 init_mu_range=init_mu_range,
                 init_sigma=init_sigma,
                 bias=bias,
