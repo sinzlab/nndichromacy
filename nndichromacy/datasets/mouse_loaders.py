@@ -43,8 +43,10 @@ def static_loader(
     inputs_mean=None,
     inputs_std=None,
     scale: float=None,
-    include_eye_position=None,
-    add_eye_pos_as_channels=None,
+    include_eye_position: bool=None,
+    add_eye_pos_as_channels: bool=None,
+    include_trial_info_keys: list=None,
+
 ):
     """
     returns a single data loader
@@ -92,6 +94,8 @@ def static_loader(
         data_keys.append("behavior")
     if include_eye_position:
         data_keys.append("pupil_center")
+    if include_trial_info_keys:
+        data_keys.extend(include_trial_info_keys)
 
     if file_tree:
         dat = FileTreeDataset(path, *data_keys)
@@ -229,7 +233,9 @@ def static_loaders(
     inputs_mean=None,
     inputs_std=None,
     scale: float=None,
-    include_eye_position=None,
+    include_eye_position: bool=None,
+    add_eye_pos_as_channels: bool=None,
+    include_trial_info_keys: list=None,
 ):
     """
     Returns a dictionary of dataloaders (i.e., trainloaders, valloaders, and testloaders) for >= 1 dataset(s).
@@ -294,6 +300,9 @@ def static_loaders(
             inputs_std=inputs_std,
             scale=scale,
             include_eye_position=include_eye_position,
+            add_eye_pos_as_channels=add_eye_pos_as_channels,
+            include_trial_info_keys=include_trial_info_keys,
+
         )
         for k in dls:
             dls[k][data_key] = loaders[k]
