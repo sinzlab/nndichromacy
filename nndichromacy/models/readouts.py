@@ -8,11 +8,11 @@ import warnings
 from torch.nn import Parameter
 from torch.nn import functional as F
 from torch.nn import ModuleDict
-from mlutils.constraints import positive
-from mlutils.layers.cores import DepthSeparableConv2d, Core2d, Stacked2dCore
-from mlutils import regularizers
-from mlutils.layers.readouts import PointPooled2d, FullGaussian2d, SpatialXFeatureLinear
-from mlutils.layers.legacy import Gaussian2d
+from neuralpredictors.constraints import positive
+from neuralpredictors.layers.cores import DepthSeparableConv2d, Core2d, Stacked2dCore
+from neuralpredictors import regularizers
+from neuralpredictors.layers.readouts import PointPooled2d, FullGaussian2d, SpatialXFeatureLinear
+from neuralpredictors.layers.legacy import Gaussian2d
 
 
 class MultiplePointPooled2d(torch.nn.ModuleDict):
@@ -101,7 +101,7 @@ class MultipleSpatialXFeatureLinear(MultiReadout, torch.nn.ModuleDict):
 class MultipleFullGaussian2d(MultiReadout, torch.nn.ModuleDict):
     def __init__(self, core, in_shape_dict, n_neurons_dict, init_mu_range, init_sigma, bias, gamma_readout,
                  gauss_type, grid_mean_predictor, grid_mean_predictor_type, source_grids,
-                 share_features, share_grid, shared_match_ids):
+                 share_features, share_grid, shared_match_ids,):
         # super init to get the _module attribute
         super().__init__()
         k0 = None
@@ -112,11 +112,13 @@ class MultipleFullGaussian2d(MultiReadout, torch.nn.ModuleDict):
 
             source_grid = None
             shared_grid = None
+            shared_transform = None
             if grid_mean_predictor is not None:
                 if grid_mean_predictor_type == 'cortex':
                     source_grid = source_grids[k]
                 else:
                     raise KeyError('grid mean predictor {} does not exist'.format(grid_mean_predictor_type))
+                
             elif share_grid:
                 shared_grid = {
                     'match_ids': shared_match_ids[k],
@@ -141,7 +143,7 @@ class MultipleFullGaussian2d(MultiReadout, torch.nn.ModuleDict):
                 grid_mean_predictor=grid_mean_predictor,
                 shared_features=shared_features,
                 shared_grid=shared_grid,
-                source_grid=source_grid
+                source_grid=source_grid,
             )
                             )
         self.gamma_readout = gamma_readout

@@ -1,48 +1,62 @@
-version: '2.3'
+version: '3.4'
+x-build: &build
+  context: .
+  dockerfile: Dockerfile
+
+x-shared: &common
+  build:
+    context: .
+    dockerfile: Dockerfile
+    args:
+      - GITHUB_USER=${GITHUB_USER}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - DEV_SOURCE=${DEV_SOURCE}
+  volumes:
+    - .:/src/nndichromacy
+    - ./notebooks:/notebooks
+    - /mnt/scratch07/color_mei:/data
+    - /mnt/scratch07/nexport:/nexport
+  env_file:
+    - .env
+
 services:
   notebook:
-    build: .
-    env_file: .env
+    <<: *common
     ports:
-      - "5003:8888"
+      - "8888:8888"
+
+  pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile_pipeline
+    env_file:
+      - .env_pipeline
     volumes:
-      - ../data:/data
-      #- /mnt/qb/data:/data
-      - /tmp:/tmp
-      - .:/src/nnfabrik
       - ./notebooks:/notebooks
-    environment:
-      - DISPLAY=$DISPLAY
-      - NVIDIA_VISIBLE_DEVICES=0
-  gpu-server_develop:
-    build: .
+      - /mnt:/mnt
     ports:
       - "8888:8888"
-    volumes:
-      - /var/lib/nova/sinz-shared:/data
-      - ../projects:/notebooks
-    env_file: .env
-    environment:
-      - DISPLAY=$DISPLAY
-    runtime: nvidia
-  server_develop:
-    build: .
+    entrypoint:
+      - jupyter
+      - lab
+      - --ip=0.0.0.0
+      - --allow-root
+      - --NotebookApp.token=''
+      - --no-browser
+
+  nexport:
+    <<: *common
     ports:
       - "8888:8888"
+    env_file:
+      - .env_pipeline
     volumes:
-      - ../../../var/sinz-shared:/data
-      - ../projects:/notebooks
-    env_file: .env
-    environment:
-      - DISPLAY=$DISPLAY
-    runtime: nvidia
-  gpu_server_playground:
-    build: .
-    ports:
-      - "8888:8888"
-    volumes:
-      - /var/lib/nova/sinz-shared:/data
-    env_file: .env
-    environment:
-      - DISPLAY=$DISPLAY
-    runtime: nvidia
+      - ./notebooks:/notebooks
+      - /mnt:/mnt
+    entrypoint:
+      - jupyter
+      - lab
+      - --ip=0.0.0.0
+      - --allow-root
+      - --NotebookApp.token=''
+      - --no-browser

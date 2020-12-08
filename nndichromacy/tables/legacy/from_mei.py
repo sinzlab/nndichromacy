@@ -2,7 +2,7 @@ import datajoint as dj
 from nndichromacy.legacy.featurevis.main import TrainedEnsembleModelTemplate, MEITemplate
 from nnfabrik.main import Dataset
 from nndichromacy.tables.from_nnfabrik import TrainedModel
-from mlutils.data.datasets import StaticImageSet, FileTreeDataset
+from neuralpredictors.data.datasets import StaticImageSet, FileTreeDataset
 from nndichromacy.legacy.featurevis import integration
 from nndichromacy.mei.helpers import get_neuron_mappings
 from nnfabrik.utility.dj_helpers import make_hash

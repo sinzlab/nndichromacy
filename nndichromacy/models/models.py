@@ -2,9 +2,9 @@ import numpy as np
 import torch
 import copy
 
-from mlutils.layers.cores import Stacked2dCore, RotationEquivariant2dCore
-from mlutils.layers.legacy import Gaussian2d
-from mlutils.layers.readouts import PointPooled2d
+from neuralpredictors.layers.cores import Stacked2dCore, RotationEquivariant2dCore
+from neuralpredictors.layers.legacy import Gaussian2d
+from neuralpredictors.layers.readouts import PointPooled2d
 from nnfabrik.utility.nn_helpers import get_module_output, set_random_seed, get_dims_for_loader_dict
 from torch import nn
 from torch.nn import functional as F
@@ -73,7 +73,7 @@ def se_core_gauss_readout(dataloaders, seed, hidden_channels=32, input_kern=13, 
                           depth_separable=False, linear=False, data_info=None,
                           ):
     """
-    Model class of a stacked2dCore (from mlutils) and a pointpooled (spatial transformer) readout
+    Model class of a stacked2dCore (from neuralpredictors) and a pointpooled (spatial transformer) readout
 
     Args:
         dataloaders: a dictionary of dataloaders, one loader per session
@@ -81,8 +81,8 @@ def se_core_gauss_readout(dataloaders, seed, hidden_channels=32, input_kern=13, 
         seed: random seed
         elu_offset: Offset for the output non-linearity [F.elu(x + self.offset)]
 
-        all other args: See Documentation of Stacked2dCore in mlutils.layers.cores and
-            PointPooled2D in mlutils.layers.readouts
+        all other args: See Documentation of Stacked2dCore in neuralpredictors.layers.cores and
+            PointPooled2D in neuralpredictors.layers.readouts
 
     Returns: An initialized model which consists of model.core and model.readout
     """
@@ -176,7 +176,7 @@ def se_core_full_gauss_readout(dataloaders, seed, hidden_channels=32, input_kern
                                shift_layers=3, gamma_shifter=0, shifter_bias=True,
                                ):
     """
-    Model class of a stacked2dCore (from mlutils) and a pointpooled (spatial transformer) readout
+    Model class of a stacked2dCore (from neuralpredictors) and a pointpooled (spatial transformer) readout
 
     Args:
         dataloaders: a dictionary of dataloaders, one loader per session
@@ -196,8 +196,8 @@ def se_core_full_gauss_readout(dataloaders, seed, hidden_channels=32, input_kern
         share_features: whether to share features between readouts. This requires that the datasets
             have the properties `neurons.multi_match_id` which are used for matching. Every dataset
             has to have all these ids and cannot have any more.
-        all other args: See Documentation of Stacked2dCore in mlutils.layers.cores and
-            PointPooled2D in mlutils.layers.readouts
+        all other args: See Documentation of Stacked2dCore in neuralpredictors.layers.cores and
+            PointPooled2D in neuralpredictors.layers.readouts
 
     Returns: An initialized model which consists of model.core and model.readout
     """
@@ -317,7 +317,7 @@ def se_core_point_readout(dataloaders, seed, hidden_channels=32, input_kern=13, 
                           depth_separable=False, linear=False, data_info=None,
                           ):
     """
-    Model class of a stacked2dCore (from mlutils) and a pointpooled (spatial transformer) readout
+    Model class of a stacked2dCore (from neuralpredictors) and a pointpooled (spatial transformer) readout
 
     Args:
         dataloaders: a dictionary of dataloaders, one loader per session
@@ -325,8 +325,8 @@ def se_core_point_readout(dataloaders, seed, hidden_channels=32, input_kern=13, 
         seed: random seed
         elu_offset: Offset for the output non-linearity [F.elu(x + self.offset)]
 
-        all other args: See Documentation of Stacked2dCore in mlutils.layers.cores and
-            PointPooled2D in mlutils.layers.readouts
+        all other args: See Documentation of Stacked2dCore in neuralpredictors.layers.cores and
+            PointPooled2D in neuralpredictors.layers.readouts
 
     Returns: An initialized model which consists of model.core and model.readout
     """
@@ -398,7 +398,7 @@ def stacked2d_core_gaussian_readout(dataloaders, seed, hidden_channels=32, input
                                     gamma_readout=0.1, elu_offset=0, stack=None, isotropic=True, data_info=None,
                                     ):
     """
-    Model class of a stacked2dCore (from mlutils) and a pointpooled (spatial transformer) readout
+    Model class of a stacked2dCore (from neuralpredictors) and a pointpooled (spatial transformer) readout
 
     Args:
         dataloaders: a dictionary of dataloaders, one loader per session
@@ -406,8 +406,8 @@ def stacked2d_core_gaussian_readout(dataloaders, seed, hidden_channels=32, input
         seed: random seed
         elu_offset: Offset for the output non-linearity [F.elu(x + self.offset)]
 
-        all other args: See Documentation of Stacked2dCore in mlutils.layers.cores and
-            PointPooled2D in mlutils.layers.readouts
+        all other args: See Documentation of Stacked2dCore in neuralpredictors.layers.cores and
+            PointPooled2D in neuralpredictors.layers.readouts
 
     Returns: An initialized model which consists of model.core and model.readout
     """
@@ -664,7 +664,7 @@ def se_core_spatialXfeature_readout(dataloaders, seed, hidden_channels=32, input
                                     n_se_blocks=1,
                                     depth_separable=False, linear=False, data_info=None):
     """
-    Model class of a stacked2dCore (from mlutils) and a spatialXfeature (factorized) readout
+    Model class of a stacked2dCore (from neuralpredictors) and a spatialXfeature (factorized) readout
 
     Args:
 

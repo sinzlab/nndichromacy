@@ -13,14 +13,15 @@ from ..utility.measures import (get_oracles,
                                 get_targets,
                                 get_fraction_oracles,
                                 get_mei_norm,
-                                get_mei_color_bias)
+                                get_mei_color_bias,
+                                get_conservative_avg_correlations)
 from .from_nnfabrik import TrainedModel, ScoringTable, SummaryScoringTable
 from .from_mei import MEISelector, TrainedEnsembleModel
 from .utility import DataCache, TrainedModelCache, EnsembleModelCache
 from nnfabrik.utility.dj_helpers import CustomSchema
 from .from_mei import MEIScore
 
-schema = CustomSchema(dj.config.get('schema_name', 'nnfabrik_core'))
+schema = CustomSchema(dj.config.get("nnfabrik.schema_name", "nnfabrik_core"))
 fetch_download_path = '/data/fetched_from_attach'
 
 
@@ -37,6 +38,18 @@ class CorrelationToAverge(ScoringTable):
 
 
 @schema
+class CorrelationToAvgConservative(ScoringTable):
+    trainedmodel_table = TrainedModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_conservative_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_correlation_cons"
+    data_cache = DataCache
+    model_cache = TrainedModelCache
+
+
+@schema
 class TestCorrelation(ScoringTable):
     trainedmodel_table = TrainedModel
     dataset_table = Dataset
@@ -44,6 +57,18 @@ class TestCorrelation(ScoringTable):
     measure_function = staticmethod(get_correlations)
     measure_dataset = "test"
     measure_attribute = "test_correlation"
+    data_cache = DataCache
+    model_cache = TrainedModelCache
+
+
+@schema
+class ValidationCorrelation(ScoringTable):
+    trainedmodel_table = TrainedModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_correlations)
+    measure_dataset = "validation"
+    measure_attribute = "validation_correlation"
     data_cache = DataCache
     model_cache = TrainedModelCache
 
