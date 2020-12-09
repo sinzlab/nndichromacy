@@ -29,6 +29,8 @@ dj.config['stores']['minio'] = {  # store in s3
 
 @schema
 class DataInfo(DataInfoBase):
+    dataset_table = Dataset
+    user_table = Fabrikant
 
     def create_stats_files(self, key=None, path=None):
 

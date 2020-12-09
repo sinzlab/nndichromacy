@@ -8,6 +8,7 @@ from collections.abc import Iterable
 import contextlib
 import warnings
 from .measure_helpers import get_subset_of_repeats, is_ensemble_function
+from itertools import combinations
 
 
 def model_predictions_repeats(model, dataloader, data_key, device='cuda', broadcast_to_target=False):
@@ -79,7 +80,7 @@ def get_avg_correlations(model, dataloaders, device='cpu', as_dict=False, per_ne
     """
     if 'test' in dataloaders:
         dataloaders = dataloaders['test']
-    
+
     correlations = {}
     for k, loader in dataloaders.items():
 
@@ -101,6 +102,72 @@ def get_avg_correlations(model, dataloaders, device='cpu', as_dict=False, per_ne
 
     if not as_dict:
         correlations = np.hstack([v for v in correlations.values()]) if per_neuron else np.mean(np.hstack([v for v in correlations.values()]))
+    return correlations
+
+
+def get_conservative_avg_correlations(model, dataloaders, device='cpu', as_dict=False, per_neuron=True):
+    """
+    Returns more conservative average correlation between model outputs and responses over repeated trials
+
+    """
+    if 'test' in dataloaders:
+        dataloaders = dataloaders['test']
+
+    correlations = {}
+
+    for k, loader in dataloaders.items():
+
+        # Compute correlation with average targets
+        target, output = model_predictions_repeats(dataloader=loader,
+                                                   model=model,
+                                                   data_key=k,
+                                                   device=device,
+                                                   broadcast_to_target=True)
+
+        np.random.seed(222)
+
+        # number of splits to compute the mean correlation with
+        n_splits = 20
+
+        images = len(target)
+        neurons = len(target[0][0])
+
+        target_resp, output_pred = [], []
+        for i, (t, o) in enumerate(zip(target, output)):
+
+            repeats = len(t)
+            split = repeats // 2
+
+            possible_splits = np.asarray(list(combinations(np.arange(repeats), split)))
+            target_idx = np.random.choice(possible_splits.shape[0], n_splits)
+
+            # compute mean per split
+            target_mean_splits = np.vstack([np.take(t, possible_splits[idx], axis=0).mean(axis=0) for idx in target_idx])
+            target_resp.append(target_mean_splits)
+
+            output_splits = np.zeros((n_splits, repeats-split))
+            for n, idx in enumerate(target_idx):
+                output_splits[n] = [j for j in range(repeats) if not j in possible_splits[idx]]
+            output_splits = output_splits.astype(int)
+
+            output_mean_splits = np.vstack([np.take(o, split, axis=0).mean(axis=0) for split in output_splits])
+            output_pred.append(output_mean_splits)
+
+
+        target_resp = np.stack(target_resp)
+        output_pred = np.stack(output_pred)
+
+        correlations[k] = corr(target_resp, output_pred, axis=0).mean(axis=0)
+
+        # Check for nans
+        if np.any(np.isnan(correlations[k])):
+            warnings.warn('{}% NaNs , NaNs will be set to Zero.'.format(np.isnan(correlations[k]).mean() * 100))
+        correlations[k][np.isnan(correlations[k])] = 0
+
+    if not as_dict:
+        correlations = np.hstack([v for v in correlations.values()]) if per_neuron else np.mean(
+            np.hstack([v for v in correlations.values()]))
+
     return correlations
 
 
