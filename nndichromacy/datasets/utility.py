@@ -298,12 +298,12 @@ def add_h5_to_preprocessed_table(path, keys, comments, ignore_all_behaviors=True
         dat.add_link('images', 'inputs')
         print(dat)
 
-    for key in (experiment.Scan() & keys).fetch('KEY'):
+    for i, key in enumerate((experiment.Scan() & keys).fetch('KEY')):
         print(key)
         if filenames is None:
             filename = (template + '/').format(**key)
         else:
-            filename = datasets[0].split('.')[0] + '/'
+            filename = datasets[i]
         print(filename)
         dat = FileTreeDataset(filename, 'images', 'responses')
         ai, se, si, ui, x, y, z = (experiment.ScanSet.UnitInfo & key).fetch('animal_id', 'session', 'scan_idx',
