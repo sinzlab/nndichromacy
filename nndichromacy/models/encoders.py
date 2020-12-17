@@ -49,11 +49,13 @@ class Encoder(nn.Module):
                 eye_pos = torch.tensor(eye_pos)
             eye_pos = eye_pos.to(x.device).to(dtype=x.dtype)
 
+            #import ipdb; ipdb.set_trace()
             if trial_idx is not None:
                 if not isinstance(trial_idx, torch.Tensor):
                     trial_idx = torch.tensor(trial_idx)
                 trial_idx = trial_idx.to(x.device).to(dtype=x.dtype)
 
+                #ipdb.set_trace()
                 if self.shifter[data_key].mlp[0].in_features == 3:
                     eye_pos = torch.cat((eye_pos, trial_idx), dim=1)
 
