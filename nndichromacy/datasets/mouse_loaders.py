@@ -244,7 +244,7 @@ def static_loaders(
     include_eye_position: bool=None,
     add_eye_pos_as_channels: bool=None,
     include_trial_info_keys: list=None,
-    overwrite_data_path: bool=True,
+    overwrite_data_path: bool=False,
 ):
     """
     Returns a dictionary of dataloaders (i.e., trainloaders, valloaders, and testloaders) for >= 1 dataset(s).
