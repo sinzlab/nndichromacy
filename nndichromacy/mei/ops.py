@@ -156,18 +156,21 @@ class ClipNormInChannel:
             x.
     """
 
-    def __init__(self, channel, norm):
-
+    def __init__(self, channel, norm, x_min=None, x_max=None):
         self.channel = channel
         self.norm = norm
+        self.x_min = x_min
+        self.x_max = x_max
 
     @varargin
     def __call__(self, x, iteration=None):
         x_norm = torch.norm(x[:, self.channel, ...])
         if x_norm > self.norm:
             x[:, self.channel, ...] = x[:, self.channel, ...] * (self.norm / x_norm)
-        return x
-
+        if self.x_min is None:
+            return x
+        else:
+            return torch.clamp(x, self.x_min, self.x_max)
 
 class ChangeNormShuffleBehavior:
     """ Change the norm of the input.
