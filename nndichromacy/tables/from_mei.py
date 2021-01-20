@@ -42,10 +42,8 @@ class MouseSelectorTemplate(dj.Computed):
 
         mappings = []
         for data_key in data_keys:
-            print(data_key)
             dat = dataloaders["train"][data_key].dataset
             neuron_ids = dat.neurons.unit_ids
-
             for neuron_pos, neuron_id in enumerate(neuron_ids):
                 mappings.append(dict(key, unit_id=neuron_id, unit_index=neuron_pos, data_key=data_key))
 
