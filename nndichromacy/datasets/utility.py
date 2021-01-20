@@ -254,7 +254,7 @@ def get_cached_loader(image_ids, responses, batch_size, shuffle=True, image_cach
     return dataloader
 
 
-def add_h5_to_preprocessed_table(path, keys, comments, ignore_all_behaviors=True, filenames=None):
+def add_h5_to_preprocessed_table(path, keys, comments, ignore_all_behaviors=False, filenames=None):
     """
     Args:
         path (str):     location of the h5 file to be added to the PreprocessedMouseData table.
