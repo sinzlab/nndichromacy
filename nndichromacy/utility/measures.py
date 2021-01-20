@@ -3,6 +3,8 @@ import numpy as np
 import torch
 from neuralpredictors.measures import corr
 from neuralpredictors.training import eval_state, device_state
+from neuralpredictors.data.samplers import RepeatsBatchSampler
+
 import types
 from collections.abc import Iterable
 import contextlib
@@ -178,7 +180,7 @@ def get_oracles_corrected(dataloaders, as_dict=False, per_neuron=True):
     return oracles
 
 
-def compute_oracle_corr_corrected(repeated_outputs):
+def compute_oracle_corr_corrected(repeated_outputs, eps=1e-12):
     """
 
     Args:
@@ -197,7 +199,7 @@ def compute_oracle_corr_corrected(repeated_outputs):
             var_mean.append(repeat.mean(axis=0))
         var_noise = np.mean(np.array(var_noise), axis=0)
         var_mean = np.var(np.array(var_mean), axis=0)
-    return var_mean / np.sqrt(var_mean * (var_mean + var_noise))
+    return var_mean / (np.sqrt(var_mean * (var_mean + var_noise)) + eps)
 
 
 def compute_oracle_corr(repeated_outputs):
@@ -458,3 +460,27 @@ def get_mei_color_bias(mei):
 
     color_bias = (torch.norm(mei[:, 0, ...]) / torch.norm(mei[:, 1, ...])).cpu().numpy()
     return color_bias
+
+
+def get_SNR(dataloaders, as_dict=False, per_neuron=True):
+    SNRs = {}
+    for k, dataloader in dataloaders.items():
+        assert isinstance(dataloader.batch_sampler, RepeatsBatchSampler), 'dataloader.batch_sampler must be a RepeatsBatchSampler'
+        responses = []
+        for _, resp in dataloader:
+            responses.append(anscombe(resp.data.cpu().numpy()))
+        mu = np.array([np.mean(repeats, axis=0) for repeats in responses])
+        mu_bar = np.mean(mu, axis=0)
+        sigma_2 = np.array([np.var(repeats, ddof=1, axis=0) for repeats in responses])
+        sigma_2_bar = np.mean(sigma_2, axis=0)
+        SNR = (1/mu.shape[0] * np.sum((mu - mu_bar)**2, axis=0)) / sigma_2_bar
+        SNRs[k] = SNR
+    if not as_dict:
+        SNRs = (
+            np.hstack([v for v in SNRs.values()])
+            if per_neuron
+            else np.mean(np.hstack([v for v in SNRs.values()]))
+        )
+    return SNRs
+def anscombe(x):
+    return 2 * np.sqrt(x + 3/8)

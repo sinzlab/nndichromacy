@@ -3,7 +3,7 @@ import datajoint as dj
 from nnfabrik.main import Model, Dataset, Trainer, Seed, Fabrikant
 
 from ..utility.measures import get_oracles, get_model_rf_size, get_oracles_corrected, get_repeats, get_FEV, \
-    get_explainable_var, get_correlations, get_poisson_loss, get_avg_correlations, get_predictions, get_targets, get_avg_firing
+    get_explainable_var, get_correlations, get_poisson_loss, get_avg_correlations, get_predictions, get_targets, get_avg_firing, get_SNR
 
 from .from_mei import MEISelector
 from .from_nnfabrik import MeasuresTable, SummaryMeasuresBase
@@ -23,6 +23,16 @@ class ExplainableVar(MeasuresTable):
     measure_function = staticmethod(get_explainable_var)
     measure_dataset = "test"
     measure_attribute = "fev"
+    data_cache = DataCache
+
+
+@schema
+class SignalToNoiseRatio(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_SNR)
+    measure_dataset = "test"
+    measure_attribute = "snr"
     data_cache = DataCache
 
 
