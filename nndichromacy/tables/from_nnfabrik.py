@@ -84,9 +84,13 @@ class ScoringTable(ScoringBase):
         dataset_config.update(kwargs)
         if 'seed' in dataset_config:
             dataset_config.pop('seed')
-        dataloaders = static_loader(path=dataset_config.pop("paths")[0],
-                                    return_test_sampler=True,
-                                    **dataset_config)
+
+        paths = dataset_config.pop("paths")
+        dataloaders = {}
+        for path in paths:
+            dataloaders.update(static_loader(path=path,
+                                        return_test_sampler=True,
+                                        **dataset_config))
         return dataloaders
 
     def get_model(self, key=None):
