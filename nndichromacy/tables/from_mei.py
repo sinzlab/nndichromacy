@@ -38,13 +38,14 @@ class MouseSelectorTemplate(dj.Computed):
 
     def make(self, key):
         dataloaders = (Dataset & key).get_dataloader()
-        data_key = list(dataloaders["train"].keys())[0]
-        dat = dataloaders["train"][data_key].dataset
-        neuron_ids = dat.neurons.unit_ids
+        data_keys = list(dataloaders["train"].keys())
 
         mappings = []
-        for neuron_pos, neuron_id in enumerate(neuron_ids):
-            mappings.append(dict(key, unit_id=neuron_id, unit_index=neuron_pos, data_key=data_key))
+        for data_key in data_keys:
+            dat = dataloaders["train"][data_key].dataset
+            neuron_ids = dat.neurons.unit_ids
+            for neuron_pos, neuron_id in enumerate(neuron_ids):
+                mappings.append(dict(key, unit_id=neuron_id, unit_index=neuron_pos, data_key=data_key))
 
         self.insert(mappings)
 
