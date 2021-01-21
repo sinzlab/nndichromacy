@@ -153,6 +153,8 @@ def static_loader(
         data_key = path.split("static")[-1].split(".")[0].replace("preproc", "").replace("_nobehavior", "")
     elif "ColorImageNet" in path:
         data_key = path.split("static")[-1].split("-ColorImageNet")[0]
+    elif "GrayImageNet" in path:
+        data_key = path.split("static")[-1].split("-GrayImageNet")[0]
     else:
         print("filename not expected, using full filename as data_key")
         data_key = path
