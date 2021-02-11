@@ -15,7 +15,7 @@ RUN git clone -b readout_position_regularizer https://github.com/KonstantinWille
     git clone https://github.com/sinzlab/nnfabrik &&\
     git clone -b express_ensemble_loading https://github.com/KonstantinWilleke/mei &&\
     git clone https://github.com/sinzlab/data_port &&\
-    git clone https://github.com/sinzlab/nexport.git
+    git clone https://github.com/KonstantinWilleke/nexport.git
 
 FROM ${BASE_IMAGE}
 COPY --from=base /src /src
