@@ -534,7 +534,8 @@ def get_SNR(dataloaders, as_dict=False, per_neuron=True):
     for k, dataloader in dataloaders.items():
         assert isinstance(dataloader.batch_sampler, RepeatsBatchSampler), 'dataloader.batch_sampler must be a RepeatsBatchSampler'
         responses = []
-        for _, resp in dataloader:
+        for batch in dataloader:
+            images, resp = batch[:2]
             responses.append(anscombe(resp.data.cpu().numpy()))
         mu = np.array([np.mean(repeats, axis=0) for repeats in responses])
         mu_bar = np.mean(mu, axis=0)
@@ -549,5 +550,7 @@ def get_SNR(dataloaders, as_dict=False, per_neuron=True):
             else np.mean(np.hstack([v for v in SNRs.values()]))
         )
     return SNRs
+
+
 def anscombe(x):
     return 2 * np.sqrt(x + 3/8)
