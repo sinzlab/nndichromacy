@@ -3,19 +3,27 @@ import torch
 import copy
 
 from neuralpredictors.layers.cores import Stacked2dCore, RotationEquivariant2dCore
+from neuralpredictors.layers.cores import Stacked2dCore
 from neuralpredictors.layers.legacy import Gaussian2d
-from neuralpredictors.layers.readouts import PointPooled2d
+from neuralpredictors.layers.readouts import PointPooled2d, FullGaussian2d
 from nnfabrik.utility.nn_helpers import set_random_seed, get_dims_for_loader_dict
 from neuralpredictors.utils import get_module_output
 from torch import nn
 from torch.nn import functional as F
 
-from .cores import SE2dCore, TransferLearningCore
-from .readouts import MultipleFullGaussian2d, MultiReadout, MultipleSpatialXFeatureLinear
-from .utility import unpack_data_info
 from .utility import *
 from .shifters import MLPShifter, StaticAffine2dShifter
 from .encoders import Encoder
+from .cores import SE2dCore, TransferLearningCore
+from .readouts import MultipleFullGaussian2d, MultiReadout, MultipleSpatialXFeatureLinear, MultipleGaussian2d
+
+try:
+    from ..tables.from_nnfabrik import TrainedModel
+    from nnfabrik.main import Model
+except ModuleNotFoundError:
+    pass
+except:
+    print("dj database connection could not be established. no access to pretrained models available.")
 
 
 # from . import logger as log
@@ -821,3 +829,79 @@ def rotation_equivariant_gauss_readout(dataloaders,
     model = Encoder(core, readout, elu_offset)
 
     return model
+
+
+def augmented_full_readout(dataloaders=None,
+                           seed=None,
+                           key=None,
+                           mua_in=False,
+                           augment_x_start=-.75,
+                           augment_x_end=.75,
+                           augment_y_start=-.75,
+                           augment_y_end=.75,
+                           n_augment_x=5,
+                           n_augment_y=5,
+                           trainedmodel_table=None,
+                           ):
+
+    if trainedmodel_table is None:
+        trainedmodel_table = TrainedModel
+
+    dataloaders, models = trainedmodel_table().load_model(key)
+
+
+    n_models = len(models.members) if hasattr(models, 'members') else 1
+
+    for i in range(n_models):
+
+        model = models.members[i] if hasattr(models, 'members') else models
+        data_key = list(model.readout.keys())[0]
+
+        grid_augment = []
+        for x in np.linspace(augment_x_start, augment_x_end, n_augment_x):
+            for y in np.linspace(augment_y_start, augment_y_end, n_augment_y):
+                grid_augment.append([x, y])
+        grid_augment.append([0, 0])
+        grid_augment = torch.tensor(grid_augment)
+        neuron_repeats = grid_augment.shape[0]
+
+        total_n_neurons = 0
+        for data_key, readout in model.readout.items():
+            if data_key == 'augmentation':
+                continue
+            total_n_neurons += readout.outdims - (32 if mua_in else 0)
+
+        n_augmented_units = total_n_neurons * neuron_repeats
+
+        model.readout['augmentation'] = FullGaussian2d(in_shape=model.readout[data_key].in_shape,
+                                                       outdims=n_augmented_units,
+                                                       bias=True,
+                                                       gauss_type=model.readout[data_key].gauss_type)
+        insert_index = 0
+        for data_key, readout in model.readout.items():
+
+            if data_key == 'augmentation':
+                continue
+
+            for i in range(readout.outdims - (32 if mua_in else 0)):
+                features = model.readout[data_key].features.data[:, :, :, i]
+
+                model.readout["augmentation"].features.data[:, :, :, insert_index:insert_index + neuron_repeats] = features[:, :, :, None]
+                model.readout["augmentation"].bias.data[insert_index:insert_index + neuron_repeats] = model.readout[data_key].bias.data[i]
+                model.readout['augmentation'].sigma.data[:, insert_index:insert_index + neuron_repeats, :, :] = model.readout[data_key].sigma.data[:,i, ...]
+                model.readout["augmentation"].mu.data[0, insert_index:insert_index + neuron_repeats, 0, :] = grid_augment
+
+                insert_index += neuron_repeats
+
+        sessions = []
+        for data_key in model.readout.keys():
+            if data_key != 'augmentation':
+                sessions.append(data_key)
+
+            if hasattr(model, 'shifter'):
+                pass
+
+        for session in sessions:
+            model.readout.pop(session)
+
+    return models
