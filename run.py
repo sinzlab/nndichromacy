@@ -18,5 +18,5 @@ os.makedirs('/data/mouse/toliaslab/static/')
 # project specific imports
 from nndichromacy.tables.from_nnfabrik import TrainedModel
 
-
+(TrainedModel & TrainedModel().fetch("KEY", order_by="score DESC", limit=1)).load_model()
 print("Entries in TrainedModel table", len(TrainedModel()))
