@@ -18,7 +18,7 @@ os.makedirs('/data/mouse/toliaslab/static/')
 # project specific imports
 from nndichromacy.tables.from_nnfabrik import TrainedModel
 
-dataset_hashes = ['aefe8701f8850b10e44d392d904740b9', 'c7851ea263ce6d54b621834b56330410']
+dataset_hashes = ['f6b2477ef169c1e1f40b9d125cb2b520']
 for dataset_hash in dataset_hashes:
     pop_key = {'dataset_hash': dataset_hash,
                'trainer_hash': '0d06f037501e129d11aa288d8f22788f',
