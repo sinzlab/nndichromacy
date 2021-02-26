@@ -8,8 +8,8 @@ from shutil import copyfile
 import os
 
 dj.config["enable_python_native_blobs"] = True
-dj.config["nnfabrik.schema_name"]= 'nnfabrik_toy_V4'
-schema = dj.schema('nnfabrik_toy_V4')
+dj.config["nnfabrik.schema_name"]= 'nnfabrik_color_mei'
+schema = dj.schema('nnfabrik_color_mei')
 
 # copy data from QB to $SCRATCH volume
 os.makedirs('/data/mouse/toliaslab/static/')
