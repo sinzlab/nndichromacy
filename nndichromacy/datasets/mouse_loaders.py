@@ -246,7 +246,7 @@ def static_loaders(
     include_eye_position: bool=None,
     add_eye_pos_as_channels: bool=None,
     include_trial_info_keys: list=None,
-    overwrite_data_path: bool=False,
+    overwrite_data_path: bool=True,
 ):
     """
     Returns a dictionary of dataloaders (i.e., trainloaders, valloaders, and testloaders) for >= 1 dataset(s).
@@ -289,9 +289,8 @@ def static_loaders(
     basepath = '/data/mouse/toliaslab/static/'
 
     for path, neuron_id, image_id in zip_longest(paths, neuron_ids, image_ids, fillvalue=None):
-        if overwrite_data_path:
+        if (overwrite_data_path) and (os.path.exists(basepath)):
             path = os.path.join(basepath, path)
-
 
         data_key, loaders = static_loader(
             path,
