@@ -18,5 +18,9 @@ os.makedirs('/data/mouse/toliaslab/static/')
 # project specific imports
 from nndichromacy.tables.from_nnfabrik import TrainedModel
 
-(TrainedModel & TrainedModel().fetch("KEY", order_by="score DESC", limit=1)).load_model()
-print("Entries in TrainedModel table", len(TrainedModel()))
+dataset_hashes = ['aefe8701f8850b10e44d392d904740b9', 'c7851ea263ce6d54b621834b56330410']
+for dataset_hash in dataset_hashes:
+    pop_key = {'dataset_hash': dataset_hash,
+               'trainer_hash': '0d06f037501e129d11aa288d8f22788f',
+               'model_hash': 'af90cf960a14d3ea4b8d6138d4510693'}
+    TrainedModel.populate(pop_key, display_progress=True, reserve_jobs=True)
