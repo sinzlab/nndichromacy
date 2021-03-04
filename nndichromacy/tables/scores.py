@@ -263,6 +263,74 @@ class CorrToAvgEnsembleDepSetHighMSE(ScoringTable):
     dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb')
 
 
+
+@schema
+class CtAEnsembleBlueHigh(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_test_corr_blue_high"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='image_class_rgb_blue_high')
+
+
+@schema
+class CtAEnsembleBlueHigh(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_test_corr_blue_high"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='image_class_rgb_blue_high')
+
+
+@schema
+class CtAEnsembleBlueLow(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_test_corr_blue_low"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_blue_only_bckgr')
+
+
+@schema
+class CtAEnsembleGreenHigh(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_test_corr_green_high"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_green_high')
+
+
+@schema
+class CtAEnsembleGreenLow(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_test_corr_green_low"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_green_only_bckgr')
+
+
+
+
 ##### ============ Summary Scores ============ #####
 
 @schema
