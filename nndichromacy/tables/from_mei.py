@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Callable, Iterable, Mapping, Optional, Tuple, Dict, Any
+import warnings
 
 import datajoint as dj
 from nnfabrik.main import Dataset
@@ -42,8 +43,13 @@ class MouseSelectorTemplate(dj.Computed):
 
         mappings = []
         for data_key in data_keys:
+            print(data_key)
             dat = dataloaders["train"][data_key].dataset
-            neuron_ids = dat.neurons.unit_ids
+            try:
+                neuron_ids = dat.neurons.unit_ids
+            except AttributeError:
+                warnings.warn("unit_ids were not found in the dataset - using indices 0-N instead")
+                neuron_ids = range(dat.responses.shape[1])
             for neuron_pos, neuron_id in enumerate(neuron_ids):
                 mappings.append(dict(key, unit_id=neuron_id, unit_index=neuron_pos, data_key=data_key))
 
