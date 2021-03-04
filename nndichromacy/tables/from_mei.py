@@ -43,7 +43,6 @@ class MouseSelectorTemplate(dj.Computed):
 
         mappings = []
         for data_key in data_keys:
-            print(data_key)
             dat = dataloaders["train"][data_key].dataset
             try:
                 neuron_ids = dat.neurons.unit_ids
