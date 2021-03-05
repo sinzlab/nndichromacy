@@ -22,6 +22,26 @@ def concave_hull_pca_selector(
     use_polygon=False,
     invert_scatter=False,
 ):
+    """
+
+    Args:
+        key (dictionary): used to restrict the ScanSet.UnitInfo table to get the neuronal positions in cortex
+        dataloaders (dict, nnfabrik dataloaders object): dictionary of dictionaries that contains, "train",
+            "validation", and "test" keys
+        correlation_threshold (float): Threshold, which units should be excluded based on the correlation with
+            the units response with the reponse as projected on the first principle component
+        exclude(str): can be "higher", or "lower". Excludes neurons higher, or lower of the corr threshold
+        concave_alpha (float): Sets the alpha parameter of the concave hull fit
+        use_polygon: Use the Polygon fitted on the concave hull to excluce units if True.
+            Otherwise uses the correlation threshold exclusively.
+        invert_scatter: If True, inverts the y-axis of the scatterplot, so the the origin is at the top left
+            (as in plt.imshow).
+
+    Returns:
+        good_ids (np.array): a list of the unit_ids that dont have recording artefacts.
+        fig (plt.figure): A figure with 3 subplots, showing the Signal*PC correlations, excluded units, and
+            concave-hull/polygon fit.
+    """
 
     data_key = list(dataloaders["train"].keys())[0]
     responses = []
@@ -66,7 +86,10 @@ def concave_hull_pca_selector(
     neuron_id_key = [dict(unit_id=i) for i in neuron_ids]
     x_coords, y_coords = [], []
     x, y, unit_ids = (ScanSet.UnitInfo & key & neuron_id_key).fetch(
-        "px_x", "px_y", "unit_id", order_by="unit_id",
+        "px_x",
+        "px_y",
+        "unit_id",
+        order_by="unit_id",
     )
 
     assert (neuron_ids == unit_ids).sum() == len(
@@ -113,5 +136,7 @@ def concave_hull_pca_selector(
         axs[2].invert_yaxis()
     plt.close()
 
-    good_ids = good_ids if use_polygon is False else neuron_ids[np.array(selected_units)]
+    good_ids = (
+        good_ids if use_polygon is False else neuron_ids[np.array(selected_units)]
+    )
     return good_ids, fig
