@@ -17,7 +17,7 @@ from ..utility.measures import (get_oracles,
                                 get_conservative_avg_correlations)
 from .from_nnfabrik import TrainedModel, ScoringTable, SummaryScoringTable
 from .from_mei import MEISelector, TrainedEnsembleModel
-from .utility import DataCache, TrainedModelCache, EnsembleModelCache
+from . import DataCache, TrainedModelCache, EnsembleModelCache
 from nnfabrik.utility.dj_helpers import CustomSchema
 from .from_mei import MEIScore
 
