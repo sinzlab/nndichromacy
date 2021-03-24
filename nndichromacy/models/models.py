@@ -19,6 +19,7 @@ from .readouts import MultipleFullGaussian2d, MultiReadout, MultipleSpatialXFeat
 
 try:
     from ..tables.from_nnfabrik import TrainedModel
+    from ..tables.from_mei import TrainedEnsembleModel
     from nnfabrik.main import Model
 except ModuleNotFoundError:
     pass
@@ -842,10 +843,12 @@ def augmented_full_readout(dataloaders=None,
                            n_augment_x=5,
                            n_augment_y=5,
                            trainedmodel_table=None,
-                           ):
+                           rename_data_key=True):
 
     if trainedmodel_table is None:
         trainedmodel_table = TrainedModel
+    elif trainedmodel_table == 'TrainedEnsembleModel':
+        trainedmodel_table = TrainedEnsembleModel
 
     dataloaders, models = trainedmodel_table().load_model(key)
 
@@ -903,5 +906,11 @@ def augmented_full_readout(dataloaders=None,
 
         for session in sessions:
             model.readout.pop(session)
+
+        if rename_data_key is False:
+            if len(sessions) > 1:
+                raise ValueError("Renaming to original data key is only possible when dataloader has one data key only")
+            model.readout[sessions[0]] = model.readout.pop("augmentation")
+
 
     return models
