@@ -310,4 +310,9 @@ def standard_trainer(
     return score, output, model.state_dict()
 
 
+def augmented_model_trainer(model, dataloaders, seed, uid=None, cb=None):
+    score = 0
+    output = 0
+    model_state = model.state_dict()
 
+    return score, output, model_state
