@@ -30,13 +30,14 @@ def extend_img_with_behavior(img, behavior):
     return torch.cat([img, *[torch.ones(1, 1, *img.shape[2:]).to(img.device) * i for i in behavior]], dim=1)
 
 
-def preprocess_img_for_reconstruction(img, img_size, device="cuda"):
+def preprocess_img_for_reconstruction(img, img_size, img_statistics, device="cuda"):
     """
     Turn the initial image from a numpy array (height x width x n_channels)
     into a torch.Tensor on the specified device.
     Args:
         img: np.array (height, width, n_channels)
         img_size (tuple): desired (height, width) of the img, has to match the models expectation
+        img_statistics (tuple): (mean, std)
         device: "cuda" or "cpu"
 
     Returns: torch.Tensor
@@ -57,7 +58,8 @@ def preprocess_img_for_reconstruction(img, img_size, device="cuda"):
     if isinstance(img, np.ndarray):
         img = torch.from_numpy(img).to(device)
 
-    img = img[:, 1:, ...]
+    img = img[:, 1:, ...] if img.shape[1] > 1 else img
+    img = (img - img_statistics[0]) / img_statistics[1]
     return img
 
 
