@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import datajoint as dj
 
 dj.config["enable_python_native_blobs"] = True
