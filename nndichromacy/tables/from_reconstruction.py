@@ -21,7 +21,7 @@ from mei.modules import ConstrainedOutputModel
 
 from nndichromacy.tables import TrainedEnsembleModel
 from nndichromacy.tables.from_mei import schema, Dataloaders, Key, resolve_target_fn
-from nndichromacy.tables.utils import extend_img_with_behavior, \
+from .utils import extend_img_with_behavior, \
     get_image_data_from_dataset, preprocess_img_for_reconstruction, get_behavior_from_method_config
 from mei import mixins
 from .from_mei import MEISeed
@@ -317,13 +317,14 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
     def get_real_behavior(self, key):
         return self.get_neuronal_responses(key, return_behavior=True)
 
-    def get_original_image(self, key, img_statistics):
+    def get_original_image(self, key, img_statistics, dataloaders):
         image = (self.base_image_table & key).fetch1("image")
 
         image = preprocess_img_for_reconstruction(
             image,
             img_size=self.reconstruction_size,
             img_statistics=img_statistics,
+            dataloaders=dataloaders,
         )
         return image
 
@@ -351,7 +352,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
         seed = (self.seed_table() & key).fetch1("mei_seed")
         recon_type = (self.recon_type_table & key).fetch1("recon_type")
         img_mean, img_std = self.get_dataset_statistics(key, dataloaders)
-        image = self.get_original_image(key, img_statistics=(img_mean, img_std))
+        image = self.get_original_image(key, img_statistics=(img_mean, img_std), dataloaders=dataloaders)
         behavior, kwargs = get_behavior_from_method_config(
             (self.method_table & key).fetch1("method_config")
         )
