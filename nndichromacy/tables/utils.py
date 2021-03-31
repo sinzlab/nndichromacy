@@ -4,6 +4,9 @@ from typing import Dict, Any, List, Callable
 import numpy as np
 import torch
 from dataport.bcm.color_mei.utils import rescale_frame
+from nnfabrik.utility.nn_helpers import get_dims_for_loader_dict
+import torchvision
+
 
 
 def get_image_data_from_dataset(dat, image_class, image_id, return_behavior=False):
@@ -30,7 +33,7 @@ def extend_img_with_behavior(img, behavior):
     return torch.cat([img, *[torch.ones(1, 1, *img.shape[2:]).to(img.device) * i for i in behavior]], dim=1)
 
 
-def preprocess_img_for_reconstruction(img, img_size, img_statistics, device="cuda"):
+def preprocess_img_for_reconstruction(img, img_size, img_statistics, dataloaders, device="cuda"):
     """
     Turn the initial image from a numpy array (height x width x n_channels)
     into a torch.Tensor on the specified device.
@@ -58,8 +61,17 @@ def preprocess_img_for_reconstruction(img, img_size, img_statistics, device="cud
     if isinstance(img, np.ndarray):
         img = torch.from_numpy(img).to(device)
 
-    img = img[:, 1:, ...] if img.shape[1] > 1 else img
-    img = (img - img_statistics[0]) / img_statistics[1]
+    data_key = list((dataloaders["train"].keys()))[0]
+    dimensions_images = get_dims_for_loader_dict(dataloaders["train"])[data_key].get("images", 0)
+    dimensions_behavior = get_dims_for_loader_dict(dataloaders["train"])[data_key].get("behavior", 0)
+    print("grayscale dimensions: ", dimensions_images, dimensions_behavior)
+    if (dimensions_images[1] - dimensions_behavior[1]) > 1:
+        img = img[:, 1:, ...]
+    else:
+        img = torchvision.transforms.Grayscale(num_output_channels=1)(img)
+        print(img.shape)
+
+    img = (img - torch.from_numpy(img_statistics[0])).to(device) / torch.from_numpy(img_statistics[1]).to(device)
     return img
 
 
@@ -73,9 +85,11 @@ def get_behavior_from_method_config(method_config) -> tuple:
     Returns (tuple): behavior
     """
     initial = method_config.get("initial")
+    print(initial)
     pupil = initial["kwargs"].get("channel_0", None)
     dpupil = initial["kwargs"].get("channel_1", None)
     running = initial["kwargs"].get("channel_2", None)
     behavior = (pupil, dpupil, running)
     kwargs = method_config.get("model_forward_kwargs", dict())
+    print(behavior)
     return behavior, kwargs
