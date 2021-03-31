@@ -4,7 +4,7 @@ from nnfabrik.templates.trained_model import TrainedModelBase, DataInfoBase
 from nnfabrik.utility.dj_helpers import gitlog, make_hash
 from nnfabrik.builder import resolve_data, get_data
 from nnfabrik.utility.dj_helpers import CustomSchema
-from nnfabrik.main import Dataset, Trainer, Model, Fabrikant, Seed
+from nnfabrik.main import Dataset, Trainer, Model, Fabrikant, Seed, my_nnfabrik
 
 import os
 import pickle
@@ -68,6 +68,12 @@ class TrainedModel(TrainedModelBase):
     trainer_table = Trainer
     seed_table = Seed
     user_table = Fabrikant
+
+
+my_nnfabrik_1 = my_nnfabrik(dj.config.get("nnfabrik.schema_name", "nnfabrik_core"), use_common_fabrikant=False)
+@my_nnfabrik_1.schema
+class TrainedHyperModel(TrainedModelBase):
+    nnfabrik = my_nnfabrik_1
 
 
 class ScoringTable(ScoringBase):
