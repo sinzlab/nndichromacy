@@ -6,18 +6,14 @@ dj.config["display.limit"] = 70
 schema = dj.schema("nnfabrik_color_mei")
 
 from nndichromacy.tables.from_mei import MEI, MEIMethod, MEISeed, MEISelector, TrainedEnsembleModel
+from nndichromacy.tables.scores import CorrelationToAvergeEnsemble
 
-from nndichromacy.tables.from_nnfabrik import TrainedModel
-from nndichromacy.tables.from_mei import MEI, MEIMethod, MEISeed, MEISelector, TrainedEnsembleModel
+key = {'dataset_hash': 'a814c139b67e879a351442d71f62f3c2'}
 
 
+method_keys = (MEIMethod & "method_ts >'2021-03-30'").fetch("KEY")
+unit_keys = (CorrelationToAvergeEnsemble.Units & key).fetch("KEY", limit=150, order_by="unit_avg_correlation DESC")
 
-for dataset_hash in ['eaae92b3f2c085cf5b35d0faddc63c15']:
-    for method_hash in ['4f899fe8aaadbebf734c46f167028614', '782dfe2d7c6c0be6d3d018419646fc4c']:
+mei_key = dj.AndList([unit_keys, method_keys, dict(dataset_hash='a814c139b67e879a351442d71f62f3c2')])
 
-        mei_key = dict(method_hash=method_hash, dataset_hash=dataset_hash)
-        #unit_keys = (SignalToNoiseRatio.Units & mei_key & "unit_snr > 0.3").fetch("KEY", limit=300)
-        #pop_key = dj.AndList([unit_keys, mei_key])
-        #MEI.populate(pop_key, display_progress=True, order='random', reserve_jobs=True)
-
-        MEI.populate(mei_key, display_progress=True, order='random', reserve_jobs=True)
+MEI().populate(mei_key, display_progress=True, reserve_jobs=True)
