@@ -8,7 +8,7 @@ MAINTAINER Arne Nix <arnenix@gmail.com>
     git clone https://github.com/sinzlab/nnfabrik.git
     git clone -b readout_position_regularizer https://github.com/KonstantinWilleke/neuralpredictors
     git clone -b konsti_monkey_experiments https://github.com/sinzlab/mei
-    git clone https://github.com/sinzlab/data_port
+    git clone https://github.com/KonstantinWilleke/data_port
     python -m pip install -e ./nnfabrik
     python -m pip install -e ./neuralpredictors
     python -m pip install -e ./mei
