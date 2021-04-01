@@ -13,6 +13,7 @@ MAINTAINER Arne Nix <arnenix@gmail.com>
     python -m pip install -e ./neuralpredictors
     python -m pip install -e ./mei
     python -m pip install -e ./data_port
+    python -m pip install -e .
 
 %environment
     
