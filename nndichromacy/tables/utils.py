@@ -64,14 +64,12 @@ def preprocess_img_for_reconstruction(img, img_size, img_statistics, dataloaders
     data_key = list((dataloaders["train"].keys()))[0]
     dimensions_images = get_dims_for_loader_dict(dataloaders["train"])[data_key].get("images", 0)
     dimensions_behavior = get_dims_for_loader_dict(dataloaders["train"])[data_key].get("behavior", 0)
-    print("grayscale dimensions: ", dimensions_images, dimensions_behavior)
     if (dimensions_images[1] - dimensions_behavior[1]) > 1:
         img = img[:, 1:, ...]
     else:
         img = torchvision.transforms.Grayscale(num_output_channels=1)(img)
-        print(img.shape)
 
-    img = (img - torch.from_numpy(img_statistics[0])).to(device) / torch.from_numpy(img_statistics[1]).to(device)
+    img = (img - img_statistics[0]).to(device) /img_statistics[1]
     return img
 
 
