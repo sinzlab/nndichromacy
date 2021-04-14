@@ -109,7 +109,7 @@ class SE2dCore(Core2d, nn.Module):
             momentum=0.1,
             pad_input=True,
             batch_norm=True,
-            hidden_dilation=1,
+            hidden_dilation=0,
             laplace_padding=None,
             input_regularizer="LaplaceL2norm",
             stack=None,
@@ -118,6 +118,7 @@ class SE2dCore(Core2d, nn.Module):
             depth_separable=False,
             attention_conv=False,
             linear=False,
+            hidden_padding=None,
     ):
         """
         Args:
@@ -189,7 +190,7 @@ class SE2dCore(Core2d, nn.Module):
         # --- other layers
         for l in range(1, self.layers):
             layer = OrderedDict()
-            hidden_padding = ((hidden_kern[l - 1] - 1) * hidden_dilation + 1) // 2
+            hidden_padding = hidden_padding if hidden_padding is not None else ((hidden_kern[l - 1] - 1) * hidden_dilation + 1) // 2
             if depth_separable:
                 layer["ds_conv"] = DepthSeparableConv2d(hidden_channels, hidden_channels,
                                                         kernel_size=hidden_kern[l - 1],
