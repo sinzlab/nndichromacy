@@ -70,7 +70,7 @@ class TrainedModel(TrainedModelBase):
     user_table = Fabrikant
 
 
-my_nnfabrik_1 = my_nnfabrik(dj.config.get("nnfabrik.schema_name", "nnfabrik_core"), use_common_fabrikant=False)
+my_nnfabrik_1 = my_nnfabrik(dj.config.get("nnfabrik.hypersearch_schema", "nnfabrik_core"), use_common_fabrikant=False)
 @my_nnfabrik_1.schema
 class TrainedHyperModel(TrainedModelBase):
     nnfabrik = my_nnfabrik_1
