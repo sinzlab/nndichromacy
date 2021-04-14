@@ -51,10 +51,7 @@ class Encoder(nn.Module):
 
             shift = self.shifter[data_key](eye_pos)
 
-        if "sample" in kwargs:
-            x = self.readout(x, data_key=data_key, sample=kwargs["sample"], shift=shift)
-        else:
-            x = self.readout(x, data_key=data_key, shift=shift)
+        x = self.readout(x, data_key=data_key, shift=shift, **kwargs)
 
         return F.elu(x + self.offset) + 1
 
