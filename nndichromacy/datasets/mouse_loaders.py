@@ -8,7 +8,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from nnfabrik.utility.nn_helpers import set_random_seed
 from neuralpredictors.data.datasets import StaticImageSet, FileTreeDataset
 try:
-    from neuralpredictors.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel, ScaleInputs, AddPupilCenterAsChannels
+    from neuralpredictors.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel, ScaleInputs, AddPupilCenterAsChannels, AddPositionAsChannels
 except:
     from neuralpredictors.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel
 
@@ -48,6 +48,7 @@ def static_loader(
     add_eye_pos_as_channels: bool=None,
     include_trial_info_keys: list=None,
     toy_data: bool=None,
+    include_px_position=None,
 
 ):
     """
@@ -128,6 +129,9 @@ def static_loader(
         idx = [np.where(dat.neurons.unit_ids == unit_id)[0][0] for unit_id in neuron_ids]
 
     more_transforms = [Subsample(idx), ToTensor(cuda)]
+
+    if include_px_position is True:
+        more_transforms.insert(0, AddPositionAsChannels())
 
     if select_input_channel is not None:
         more_transforms.insert(0, SelectInputChannel(select_input_channel))
@@ -249,6 +253,7 @@ def static_loaders(
     overwrite_data_path: bool=True,
     return_test_sampler: bool=None,
     toy_data: bool=None,
+    include_px_position=None,
 ):
     """
     Returns a dictionary of dataloaders (i.e., trainloaders, valloaders, and testloaders) for >= 1 dataset(s).
@@ -322,6 +327,7 @@ def static_loaders(
             include_trial_info_keys=include_trial_info_keys,
             return_test_sampler=return_test_sampler,
             toy_data=toy_data,
+            include_px_position=include_px_position,
         )
         if not return_test_sampler:
             for k in dls:
