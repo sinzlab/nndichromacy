@@ -21,8 +21,12 @@ from mei.modules import ConstrainedOutputModel
 
 from nndichromacy.tables import TrainedEnsembleModel
 from nndichromacy.tables.from_mei import schema, Dataloaders, Key, resolve_target_fn
-from .utils import extend_img_with_behavior, \
-    get_image_data_from_dataset, preprocess_img_for_reconstruction, get_behavior_from_method_config
+from .utils import (
+    extend_img_with_behavior,
+    get_image_data_from_dataset,
+    preprocess_img_for_reconstruction,
+    get_behavior_from_method_config,
+)
 from mei import mixins
 from .from_mei import MEISeed
 from dataport.bcm.color_mei.schema import StaticImage
@@ -41,9 +45,7 @@ class ReconMethod(mixins.MEIMethodMixin, dj.Lookup):
         "postprocessing",
     )
 
-    def generate_mei(
-        self, dataloaders: Dataloaders, model: Module, key: Key, seed: int
-    ) -> Dict[str, Any]:
+    def generate_mei(self, dataloaders: Dataloaders, model: Module, key: Key, seed: int) -> Dict[str, Any]:
         method_fn, method_config = (self & key).fetch1("method_fn", "method_config")
         self.insert_key_in_ops(method_config=method_config, key=key)
         method_fn = self.import_func(method_fn)
@@ -75,9 +77,7 @@ class ReconTargetFunction(dj.Manual):
         target_config = cleanup_numpy_scalar(target_config)
         return target_fn, target_config
 
-    def add_entry(
-        self, target_fn, target_config, target_comment="", skip_duplicates=False
-    ):
+    def add_entry(self, target_fn, target_config, target_comment="", skip_duplicates=False):
         """
         Add a new entry to the TargetFunction table.
 
@@ -161,16 +161,12 @@ class ReconTargetUnit(dj.Manual):
             key - key in the table corresponding to the new (or possibly existing, if skip_duplicates=True) entry.
         """
 
-        dataloaders = (
-            self.dataset_table & dict(dataset_fn=dataset_fn, dataset_hash=dataset_hash)
-        ).get_dataloader()
+        dataloaders = (self.dataset_table & dict(dataset_fn=dataset_fn, dataset_hash=dataset_hash)).get_dataloader()
         data_keys = list(dataloaders["train"].keys())
         if data_key is None and len(data_keys) == 1:
             data_key = data_keys[0]
         elif data_key is None and len(data_keys) > 1:
-            raise ValueError(
-                "Multiple data_keys found. Data_key that is used for optimization has to be specified."
-            )
+            raise ValueError("Multiple data_keys found. Data_key that is used for optimization has to be specified.")
 
         unit_hash = make_hash([unit_ids, data_key])
         key = dict(
@@ -233,11 +229,9 @@ class ReconObjective(dj.Computed):
         target_fn: Callable,
         unit_ids: List,
         data_key: str,
-    ) -> constrained_output_model:
+    ) -> ConstrainedOutputModel:
 
-        return self.constrained_output_model(
-            model, unit_ids, target_fn, forward_kwargs=dict(data_key=data_key)
-        )
+        return self.constrained_output_model(model, unit_ids, target_fn, forward_kwargs=dict(data_key=data_key))
 
 
 @schema
@@ -282,9 +276,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
             )
             return definition
 
-    def get_model_responses(
-        self, model, key, image, behavior=None, device="cuda", **kwargs
-    ):
+    def get_model_responses(self, model, key, image, behavior=None, device="cuda", **kwargs):
         model.eval()
         model.to(device)
         if behavior is not None:
@@ -297,21 +289,15 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
             )
         return responses
 
-    #TODO: Add functionality when selecting a
+    # TODO: Add functionality when selecting a
     def get_neuronal_responses(self, dataloaders, key, return_behavior=False):
         data_key = (self.target_unit_table & key).fetch1("data_key")
         dat = dataloaders["train"][data_key].dataset
-        image_class, image_id = (self.base_image_table & key).fetch1(
-            "image_class", "image_id"
-        )
+        image_class, image_id = (self.base_image_table & key).fetch1("image_class", "image_id")
         if return_behavior:
-            behavior_keys = get_image_data_from_dataset(
-                dat, image_class, image_id, return_behavior=True
-            )
+            behavior_keys = get_image_data_from_dataset(dat, image_class, image_id, return_behavior=True)
         else:
-            responses = get_image_data_from_dataset(
-                dat, image_class, image_id, return_behavior=False
-            )
+            responses = get_image_data_from_dataset(dat, image_class, image_id, return_behavior=False)
         return responses if return_behavior is False else behavior_keys
 
     def get_real_behavior(self, key):
@@ -329,14 +315,10 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
         return image
 
     def get_dataset_statistics(self, key, dataloaders):
-        dataset_config = (self.trained_model_table.dataset_table & key).fetch1(
-            "dataset_config"
-        )
+        dataset_config = (self.trained_model_table.dataset_table & key).fetch1("dataset_config")
         mean, std = [dataset_config.get(i, None) for i in ["inputs_mean", "inputs_std"]]
         if mean is None:
-            mean = dataloaders["train"][
-                key["data_key"]
-            ].dataset.statistics.images.all.mean
+            mean = dataloaders["train"][key["data_key"]].dataset.statistics.images.all.mean
             std = dataloaders["train"][key["data_key"]].dataset.statistics.images.all.std
         return mean, std
 
@@ -353,9 +335,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
         recon_type = (self.recon_type_table & key).fetch1("recon_type")
         img_mean, img_std = self.get_dataset_statistics(key, dataloaders)
         image = self.get_original_image(key, img_statistics=(img_mean, img_std), dataloaders=dataloaders)
-        behavior, kwargs = get_behavior_from_method_config(
-            (self.method_table & key).fetch1("method_config")
-        )
+        behavior, kwargs = get_behavior_from_method_config((self.method_table & key).fetch1("method_config"))
         responses = (
             self.get_neuronal_responses(dataloaders=dataloaders, key=key)
             if recon_type == "neurons"
@@ -369,9 +349,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
         )
 
         target_fn = (self.target_fn_table & key).get_target_fn(responses=responses)
-        unit_ids, data_key = (self.target_unit_table & key).fetch1(
-            "unit_ids", "data_key"
-        )
+        unit_ids, data_key = (self.target_unit_table & key).fetch1("unit_ids", "data_key")
 
         output_selected_model = self.selector_table().get_output_selected_model(
             model=model,
@@ -379,9 +357,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
             unit_ids=unit_ids,
             data_key=data_key,
         )
-        mei_entity = self.method_table().generate_mei(
-            dataloaders, output_selected_model, key, seed
-        )
+        mei_entity = self.method_table().generate_mei(dataloaders, output_selected_model, key, seed)
 
         reconstructed_image = mei_entity["mei"]
         reconstructed_responses = self.get_model_responses(
