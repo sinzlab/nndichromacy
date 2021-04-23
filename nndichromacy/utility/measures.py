@@ -69,7 +69,7 @@ def model_predictions(model, dataloader, data_key, device='cpu'):
             responses = responses.squeeze(dim=0)
         with torch.no_grad():
             with device_state(model, device) if not is_ensemble_function(model) else contextlib.nullcontext():
-                output = torch.cat((output, (model(*batch, data_key=data_key).detach().cpu())), dim=0)
+                output = torch.cat((output, (model(images.to(device), data_key=data_key).detach().cpu())), dim=0)
             target = torch.cat((target, responses.detach().cpu()), dim=0)
 
     return target.numpy(), output.numpy()
@@ -532,7 +532,7 @@ def get_mei_color_bias(mei):
 def get_SNR(dataloaders, as_dict=False, per_neuron=True):
     SNRs = {}
     for k, dataloader in dataloaders.items():
-        assert isinstance(dataloader.batch_sampler, RepeatsBatchSampler), 'dataloader.batch_sampler must be a RepeatsBatchSampler'
+        #assert isinstance(dataloader.batch_sampler, RepeatsBatchSampler), 'dataloader.batch_sampler must be a RepeatsBatchSampler'
         responses = []
         for batch in dataloader:
             images, resp = batch[:2]

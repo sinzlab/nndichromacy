@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from torch import nn
 from torch.nn.init import xavier_normal
 import torch

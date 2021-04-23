@@ -19,6 +19,7 @@ from .readouts import MultipleFullGaussian2d, MultiReadout, MultipleSpatialXFeat
 
 try:
     from ..tables.from_nnfabrik import TrainedModel
+    from ..tables.from_mei import TrainedEnsembleModel
     from nnfabrik.main import Model
 except ModuleNotFoundError:
     pass
@@ -183,6 +184,7 @@ def se_core_full_gauss_readout(dataloaders, seed, hidden_channels=32, input_kern
                                attention_conv=False, shifter=None, shifter_type='MLP', input_channels_shifter=2,
                                hidden_channels_shifter=5,
                                shift_layers=3, gamma_shifter=0, shifter_bias=True,
+                               hidden_padding=0,
                                ):
     """
     Model class of a stacked2dCore (from neuralpredictors) and a pointpooled (spatial transformer) readout
@@ -285,7 +287,8 @@ def se_core_full_gauss_readout(dataloaders, seed, hidden_channels=32, input_kern
                     n_se_blocks=n_se_blocks,
                     depth_separable=depth_separable,
                     linear=linear,
-                    attention_conv=attention_conv)
+                    attention_conv=attention_conv,
+                    hidden_padding=hidden_padding,)
 
     readout = MultipleFullGaussian2d(core, in_shape_dict=in_shapes_dict,
                                      n_neurons_dict=n_neurons_dict,
@@ -842,10 +845,12 @@ def augmented_full_readout(dataloaders=None,
                            n_augment_x=5,
                            n_augment_y=5,
                            trainedmodel_table=None,
-                           ):
+                           rename_data_key=True):
 
     if trainedmodel_table is None:
         trainedmodel_table = TrainedModel
+    elif trainedmodel_table == 'TrainedEnsembleModel':
+        trainedmodel_table = TrainedEnsembleModel
 
     dataloaders, models = trainedmodel_table().load_model(key)
 
@@ -903,5 +908,11 @@ def augmented_full_readout(dataloaders=None,
 
         for session in sessions:
             model.readout.pop(session)
+
+        if rename_data_key is False:
+            if len(sessions) > 1:
+                raise ValueError("Renaming to original data key is only possible when dataloader has one data key only")
+            model.readout[sessions[0]] = model.readout.pop("augmentation")
+
 
     return models

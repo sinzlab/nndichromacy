@@ -8,7 +8,7 @@ from ..utility.measures import get_oracles, get_model_rf_size, get_oracles_corre
 from .from_mei import MEISelector
 from .from_nnfabrik import MeasuresTable, SummaryMeasuresBase
 
-from .utility import DataCache, TrainedModelCache, EnsembleModelCache
+from . import DataCache, TrainedModelCache, EnsembleModelCache
 from nnfabrik.builder import resolve_model
 from nnfabrik.utility.dj_helpers import CustomSchema
 from ..utility.dj_helpers import get_default_args

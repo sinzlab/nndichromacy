@@ -170,7 +170,9 @@ class ClipNormInChannel:
         if self.x_min is None:
             return x
         else:
-            return torch.clamp(x, self.x_min, self.x_max)
+            x[:, self.channel, ...] = torch.clamp(x[:, self.channel, ...], self.x_min, self.x_max)
+            return x
+
 
 class ChangeNormShuffleBehavior:
     """ Change the norm of the input.
