@@ -1,8 +1,7 @@
 import datajoint as dj
-from .from_mei import MEI, MEIMethod, MEISeed, MEISelector
 from nnfabrik.utility.nnf_helper import FabrikCache
 from nnfabrik.main import Model, Dataset, Trainer, Seed, Fabrikant
-from .from_mei import TrainedEnsembleModel
+from .from_mei import MEI, TrainedEnsembleModel, MEISeed, MEISelector, MEIMethod
 from .from_nnfabrik import TrainedModel
 from nnfabrik.utility.dj_helpers import CustomSchema
 schema = CustomSchema(dj.config.get("nnfabrik.schema_name", "nnfabrik_core"))
