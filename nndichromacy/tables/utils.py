@@ -7,6 +7,8 @@ from dataport.bcm.color_mei.utils import rescale_frame
 from nnfabrik.utility.nn_helpers import get_dims_for_loader_dict
 import torchvision
 
+from mei.methods import get_input_dimensions, import_object
+from mei.methods import get_dims_for_loader_dict as get_dims
 
 
 def get_image_data_from_dataset(dat, image_class, image_id, return_behavior=False):
@@ -83,11 +85,33 @@ def get_behavior_from_method_config(method_config) -> tuple:
     Returns (tuple): behavior
     """
     initial = method_config.get("initial")
-    print(initial)
-    pupil = initial["kwargs"].get("channel_0", None)
-    dpupil = initial["kwargs"].get("channel_1", None)
-    running = initial["kwargs"].get("channel_2", None)
+    if "selected_channels" not in initial["kwargs"]:
+        pupil = initial["kwargs"].get("channel_0", None)
+        dpupil = initial["kwargs"].get("channel_1", None)
+        running = initial["kwargs"].get("channel_2", None)
+    else:
+        pupil = initial["kwargs"]['selected_values'][0]
+        dpupil = initial["kwargs"]['selected_values'][1]
+        running = initial["kwargs"]['selected_values'][2]
     behavior = (pupil, dpupil, running)
     kwargs = method_config.get("model_forward_kwargs", dict())
-    print(behavior)
     return behavior, kwargs
+
+
+def get_initial_image(dataloaders, data_key, method_config, ):
+    shape = method_config.get(
+        "mei_shape", get_input_dimensions(dataloaders, get_dims, data_key=data_key)
+    )
+
+    create_initial_guess = import_object(
+        method_config["initial"]["path"], method_config["initial"]["kwargs"]
+    )
+    initial_guess = create_initial_guess(1, *shape[1:]).to(method_config["device"])
+    return initial_guess
+
+
+def process_image(initial_img, image):
+    img_shape = image.shape
+    initial_img[:, :img_shape[1], ...] = image
+
+    return initial_img

@@ -21,8 +21,12 @@ from mei.modules import ConstrainedOutputModel
 
 from nndichromacy.tables import TrainedEnsembleModel
 from nndichromacy.tables.from_mei import schema, Dataloaders, Key, resolve_target_fn
-from .utils import extend_img_with_behavior, \
-    get_image_data_from_dataset, preprocess_img_for_reconstruction, get_behavior_from_method_config
+from .utils import (
+    get_image_data_from_dataset,
+    preprocess_img_for_reconstruction,
+    get_initial_image,
+    process_image,
+)
 from mei import mixins
 from .from_mei import MEISeed
 from dataport.bcm.color_mei.schema import StaticImage
@@ -282,22 +286,18 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
             )
             return definition
 
-    def get_model_responses(
-        self, model, key, image, behavior=None, device="cuda", **kwargs
-    ):
+    def get_model_responses(self, model, key, image, device="cuda", forward_kwargs=None):
         model.eval()
         model.to(device)
-        if behavior is not None:
-            image = extend_img_with_behavior(image, behavior)
+        forward_kwargs = dict() if forward_kwargs is None else forward_kwargs
         with torch.no_grad():
             responses = model(
                 image.to(device),
                 data_key=key["data_key"],
-                **kwargs,
+                **forward_kwargs,
             )
         return responses
 
-    #TODO: Add functionality when selecting a
     def get_neuronal_responses(self, dataloaders, key, return_behavior=False):
         data_key = (self.target_unit_table & key).fetch1("data_key")
         dat = dataloaders["train"][data_key].dataset
@@ -337,7 +337,9 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
             mean = dataloaders["train"][
                 key["data_key"]
             ].dataset.statistics.images.all.mean
-            std = dataloaders["train"][key["data_key"]].dataset.statistics.images.all.std
+            std = dataloaders["train"][
+                key["data_key"]
+            ].dataset.statistics.images.all.std
         return mean, std
 
     def _insert_responses(self, response_entity: Dict[str, Any]) -> None:
@@ -352,10 +354,17 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
         seed = (self.seed_table() & key).fetch1("mei_seed")
         recon_type = (self.recon_type_table & key).fetch1("recon_type")
         img_mean, img_std = self.get_dataset_statistics(key, dataloaders)
-        image = self.get_original_image(key, img_statistics=(img_mean, img_std), dataloaders=dataloaders)
-        behavior, kwargs = get_behavior_from_method_config(
-            (self.method_table & key).fetch1("method_config")
+        image = self.get_original_image(
+            key, img_statistics=(img_mean, img_std), dataloaders=dataloaders
         )
+
+        method_config = (self.method_table & key).fetch1("method_config")
+
+        initial_img = get_initial_image(
+            dataloaders=dataloaders, method_config=method_config, data_key=key["data_key"],
+        )
+        image = process_image(initial_img=initial_img, image=image)
+
         responses = (
             self.get_neuronal_responses(dataloaders=dataloaders, key=key)
             if recon_type == "neurons"
@@ -363,8 +372,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
                 model=model,
                 key=key,
                 image=image,
-                behavior=behavior,
-                **kwargs,
+                forward_kwargs=method_config.get("model_forward_kwargs", None),
             )
         )
 
@@ -385,7 +393,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
 
         reconstructed_image = mei_entity["mei"]
         reconstructed_responses = self.get_model_responses(
-            model=model, key=key, image=reconstructed_image, behavior=None, **kwargs
+            model=model, key=key, image=reconstructed_image, forward_kwargs=method_config.get("model_forward_kwargs", None),
         )
         response_entity = dict(
             original_responses=responses,
