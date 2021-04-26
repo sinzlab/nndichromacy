@@ -158,6 +158,16 @@ class TestCorrelationEnsemble(ScoringTable):
 
 
 @schema
+class TestPoissonLossEnsemble(ScoringTable):
+    dataset_table = Dataset
+    trainedmodel_table = TrainedEnsembleModel
+    unit_table = MEISelector
+    measure_function = staticmethod(get_poisson_loss)
+    measure_dataset = "test"
+    measure_attribute = "test_poissonloss"
+
+
+@schema
 class CorrelationToAvergeEnsemble(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
