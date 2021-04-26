@@ -184,7 +184,7 @@ def se_core_full_gauss_readout(dataloaders, seed, hidden_channels=32, input_kern
                                attention_conv=False, shifter=None, shifter_type='MLP', input_channels_shifter=2,
                                hidden_channels_shifter=5,
                                shift_layers=3, gamma_shifter=0, shifter_bias=True,
-                               hidden_padding=0,
+                               hidden_padding=None,
                                ):
     """
     Model class of a stacked2dCore (from neuralpredictors) and a pointpooled (spatial transformer) readout
