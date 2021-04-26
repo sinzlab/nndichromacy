@@ -132,6 +132,16 @@ class FEVeScore(ScoringTable):
     model_cache = TrainedModelCache
 
 
+@schema
+class TestPoissonLoss(ScoringTable):
+    dataset_table = Dataset
+    trainedmodel_table = TrainedModel
+    unit_table = MEISelector
+    measure_function = staticmethod(get_poisson_loss)
+    measure_dataset = "test"
+    measure_attribute = "test_poissonloss"
+
+
 ##### ============ Ensemble Scores ============ #####
 
 
