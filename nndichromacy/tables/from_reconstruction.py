@@ -128,7 +128,7 @@ class ReconTargetFunction(dj.Manual):
 @schema
 class ReconTargetUnit(dj.Manual):
     definition = """
-    -> Dataset
+    -> self.dataset_table
     unit_hash:                      varchar(64)    # hash the list of unit IDs and data_key
     data_key:                       varchar(64)    # 
 
