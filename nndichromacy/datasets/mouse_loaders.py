@@ -37,6 +37,7 @@ def static_loader(
     normalize: bool=True,
     exclude: str=None,
     include_behavior: bool=False,
+    add_behavior_as_channels: bool=True,
     select_input_channel: int=None,
     file_tree: bool=True,
     image_condition=None,
@@ -139,7 +140,7 @@ def static_loader(
     if add_eye_pos_as_channels:
         more_transforms.insert(0, AddPupilCenterAsChannels())
 
-    if include_behavior:
+    if include_behavior and add_behavior_as_channels:
         more_transforms.insert(0, AddBehaviorAsChannels())
 
     if normalize:
@@ -240,6 +241,7 @@ def static_loaders(
     cuda: bool=True,
     normalize: bool=True,
     include_behavior: bool=False,
+    add_behavior_as_channels: bool=True,
     exclude: str=None,
     select_input_channel: int=None,
     file_tree: bool=True,
@@ -315,6 +317,7 @@ def static_loaders(
             image_base_seed=image_base_seed,
             normalize=normalize,
             include_behavior=include_behavior,
+            add_behavior_as_channels=add_behavior_as_channels,
             exclude=exclude,
             select_input_channel=select_input_channel,
             file_tree=file_tree,
