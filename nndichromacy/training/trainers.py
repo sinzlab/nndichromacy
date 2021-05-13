@@ -52,7 +52,7 @@ def standart_trainer(model, dataloaders, seed, avg_loss=False, scale_loss=True, 
 
     """
 
-    def full_objective(model, dataloader, data_key, *args):
+    def full_objective(model, dataloader, data_key, *args, **kwargs):
         """
 
         Args:
@@ -65,7 +65,7 @@ def standart_trainer(model, dataloaders, seed, avg_loss=False, scale_loss=True, 
 
         """
         loss_scale = np.sqrt(len(dataloader[data_key].dataset) / args[0].shape[0]) if scale_loss else 1.0
-        return loss_scale * criterion(model(*args, data_key=data_key), args[1].to(device)) \
+        return loss_scale * criterion(model(*args, data_key=data_key, **kwargs), args[1].to(device)) \
                + model.regularizer(data_key)
 
     ##### Model training ####################################################################################################
@@ -119,7 +119,7 @@ def standart_trainer(model, dataloaders, seed, avg_loss=False, scale_loss=True, 
 
         for batch_no, (data_key, data) in tqdm(enumerate(LongCycler(dataloaders["train"])), total=n_iterations,
                                                desc="Epoch {}".format(epoch)):
-            loss = full_objective(model, dataloaders["train"], data_key, *data)
+            loss = full_objective(model, dataloaders["train"], data_key, *data, **data._asdict())
             loss.backward()
             if (batch_no + 1) % optim_step_count == 0:
                 optimizer.step()
