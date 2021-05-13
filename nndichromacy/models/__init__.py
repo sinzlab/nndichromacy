@@ -7,4 +7,5 @@ from .models import (
     stacked2d_core_gaussian_readout,
     rotation_equivariant_gauss_readout,
     augmented_full_readout,
+    se_core_behavior_gauss,
 )
