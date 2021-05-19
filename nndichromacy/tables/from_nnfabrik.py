@@ -2,9 +2,9 @@ import datajoint as dj
 
 from nnfabrik.templates.trained_model import TrainedModelBase, DataInfoBase
 from nnfabrik.utility.dj_helpers import gitlog, make_hash
-from nnfabrik.builder import resolve_data
+from nnfabrik.builder import resolve_data, get_data
 from nnfabrik.utility.dj_helpers import CustomSchema
-from nnfabrik.main import Dataset, Trainer, Model, Fabrikant, Seed
+from nnfabrik.main import Dataset, Trainer, Model, Fabrikant, Seed, my_nnfabrik
 
 import os
 import pickle
@@ -70,6 +70,12 @@ class TrainedModel(TrainedModelBase):
     user_table = Fabrikant
 
 
+my_nnfabrik_1 = my_nnfabrik(dj.config.get("nnfabrik.hypersearch_schema", "nnfabrik_core"), use_common_fabrikant=False)
+@my_nnfabrik_1.schema
+class TrainedHyperModel(TrainedModelBase):
+    nnfabrik = my_nnfabrik_1
+
+
 class ScoringTable(ScoringBase):
     """
     Overwrites the nnfabriks scoring template, to make it handle mouse repeat-dataloaders.
@@ -80,17 +86,10 @@ class ScoringTable(ScoringBase):
         if key is None:
             key = self.fetch1('KEY')
 
-        dataset_config = (self.dataset_table()&key).fetch1("dataset_config")
+        dataset_fn, dataset_config = (self.dataset_table() & key).fn_config
         dataset_config.update(kwargs)
-        if 'seed' in dataset_config:
-            dataset_config.pop('seed')
-
-        paths = dataset_config.pop("paths")
-        dataloaders = {}
-        for path in paths:
-            dataloaders.update(static_loader(path=path,
-                                        return_test_sampler=True,
-                                        **dataset_config))
+        dataset_config["return_test_sampler"] = True
+        dataloaders = get_data(dataset_fn, dataset_config)
         return dataloaders
 
     def get_model(self, key=None):

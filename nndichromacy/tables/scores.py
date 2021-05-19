@@ -17,7 +17,7 @@ from ..utility.measures import (get_oracles,
                                 get_conservative_avg_correlations)
 from .from_nnfabrik import TrainedModel, ScoringTable, SummaryScoringTable
 from .from_mei import MEISelector, TrainedEnsembleModel
-from .utility import DataCache, TrainedModelCache, EnsembleModelCache
+from . import DataCache, TrainedModelCache, EnsembleModelCache
 from nnfabrik.utility.dj_helpers import CustomSchema
 from .from_mei import MEIScore
 
@@ -132,6 +132,16 @@ class FEVeScore(ScoringTable):
     model_cache = TrainedModelCache
 
 
+@schema
+class TestPoissonLoss(ScoringTable):
+    dataset_table = Dataset
+    trainedmodel_table = TrainedModel
+    unit_table = MEISelector
+    measure_function = staticmethod(get_poisson_loss)
+    measure_dataset = "test"
+    measure_attribute = "test_poissonloss"
+
+
 ##### ============ Ensemble Scores ============ #####
 
 
@@ -145,6 +155,16 @@ class TestCorrelationEnsemble(ScoringTable):
     measure_attribute = "avg_correlation"
     data_cache = DataCache
     model_cache = EnsembleModelCache
+
+
+@schema
+class TestPoissonLossEnsemble(ScoringTable):
+    dataset_table = Dataset
+    trainedmodel_table = TrainedEnsembleModel
+    unit_table = MEISelector
+    measure_function = staticmethod(get_poisson_loss)
+    measure_dataset = "test"
+    measure_attribute = "test_poissonloss"
 
 
 @schema
@@ -261,6 +281,74 @@ class CorrToAvgEnsembleDepSetHighMSE(ScoringTable):
     data_cache = DataCache
     model_cache = EnsembleModelCache
     dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb')
+
+
+
+@schema
+class CtAEnsembleBlueHigh(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_test_corr_blue_high"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='image_class_rgb_blue_high')
+
+
+@schema
+class CtAEnsembleBlueHigh(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_test_corr_blue_high"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='image_class_rgb_blue_high')
+
+
+@schema
+class CtAEnsembleBlueLow(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_test_corr_blue_low"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_blue_only_bckgr')
+
+
+@schema
+class CtAEnsembleGreenHigh(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_test_corr_green_high"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_green_high')
+
+
+@schema
+class CtAEnsembleGreenLow(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_test_corr_green_low"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition='imagenet_v2_green_only_bckgr')
+
+
 
 
 ##### ============ Summary Scores ============ #####
