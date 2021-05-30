@@ -133,7 +133,7 @@ class RandomNormBehaviorPositions(InitialGuessCreator):
         inital = self._create_random_tensor(*shape)
         if self.selected_channels is not None:
             for channel, value in zip(self.selected_channels, self.selected_values):
-                inital[:, channel, ...] = value
+                inital[:, channel, ...] = value.item() if not (isinstance(value, float) or isinstance(value, int)) else value
         inital[:, -2:, ...] = torch.from_numpy(np.stack(np.meshgrid(np.linspace(-1, 1, shape[-1]), np.linspace(-1, 1, shape[-2]))))
         return inital
 
