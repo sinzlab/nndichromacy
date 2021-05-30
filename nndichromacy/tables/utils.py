@@ -11,7 +11,7 @@ from mei.methods import get_input_dimensions, import_object
 from mei.methods import get_dims_for_loader_dict as get_dims
 
 
-def get_image_data_from_dataset(dat, image_class, image_id, return_behavior=False):
+def get_image_data_from_dataset(dat, image_class, image_id, return_behavior=False, image_repeat=None, return_image=None):
     if 'image_id' in dir(dat.trial_info):
         image_ids = dat.trial_info.image_id
         image_classes = dat.trial_info.image_class
@@ -23,12 +23,21 @@ def get_image_data_from_dataset(dat, image_class, image_id, return_behavior=Fals
         image_classes = dat.trial_info.frame_image_class
 
     trial_idx = np.where((image_ids == image_id) & (image_classes == image_class))[0]
-    if len(trial_idx) > 1:
-         raise ValueError("More than 1 repetition for the probe img present. Only images from the train set are allowed")
+    if (len(trial_idx) > 1 ) and (image_repeat is None):
+         raise ValueError("More than 1 repetition for the probe img present. The kwarg image_repeat has to be set in the method config")
+    if image_repeat is not None:
+        trial_idx = trial_idx[image_repeat]
+    print("Repeat Used: ", image_repeat)
     responses = dat[trial_idx].responses
+    print(responses.shape)
+
     behavior = dat[trial_idx].behavior if "behavior" in dat.data_keys else None
+    print(behavior)
     pupil_center = dat[trial_idx].pupil_center if "pupil_center" in dat.data_keys else None
-    return responses if return_behavior is False else behavior, pupil_center
+    if return_image is True:
+        return dat[trial_idx].images
+    else:
+        return responses if return_behavior is False else (behavior, pupil_center)
 
 
 def extend_img_with_behavior(img, behavior):
