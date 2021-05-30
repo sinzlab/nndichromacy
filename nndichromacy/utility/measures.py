@@ -529,6 +529,24 @@ def get_mei_color_bias(mei):
     return color_bias
 
 
+def get_mei_michelson_contrast(mei):
+    """
+    Computed the color bias as the norm of channel 0 (usually Green) divided by the norm of channel 1 (usually UV).
+    Args:
+        mei (torch.tensor): an MEI as fetched by the "mei" attribute of the MEI table. Tensor the shape of NxCxWxH
+
+    Returns:
+        color_bias (float): A scalar, representing the color bias as computed in norm(channel 0) / norm(channel1).
+    """
+    if mei.shape[1] < 2:
+        raise ValueError("MEI color bias can only be computed for 2 color channels")
+
+    norm_g = torch.norm(mei[:, 0, ...])
+    norm_b = torch.norm(mei[:, 1, ...])
+    michelson_contrast = (norm_g - norm_b) / (norm_b + norm_g)
+    return michelson_contrast.cpu().numpy()
+
+
 def get_SNR(dataloaders, as_dict=False, per_neuron=True):
     SNRs = {}
     for k, dataloader in dataloaders.items():
