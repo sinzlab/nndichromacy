@@ -131,7 +131,9 @@ def standart_trainer(model, dataloaders, seed, avg_loss=False, scale_loss=True, 
 
     # Compute avg validation and test correlation
     validation_correlation = get_correlations(model, dataloaders["validation"], device=device, as_dict=False, per_neuron=False)
-    test_correlation = get_correlations(model, dataloaders["test"], device=device, as_dict=False, per_neuron=False)
+    if return_test_score:
+        test_correlation = get_correlations(model, dataloaders["test"], device=device, as_dict=False, per_neuron=False)
+
 
     # return the whole tracker output as a dict
     output = {k: v for k, v in tracker.log.items()} if track_training else {}
