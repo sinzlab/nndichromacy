@@ -8,7 +8,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from nnfabrik.utility.nn_helpers import set_random_seed
 from neuralpredictors.data.datasets import StaticImageSet, FileTreeDataset
 try:
-    from neuralpredictors.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel, ScaleInputs, AddPupilCenterAsChannels, AddPositionAsChannels
+    from neuralpredictors.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel, ScaleInputs, AddPupilCenterAsChannels, AddPositionAsChannels, ReshapeImages
 except:
     from neuralpredictors.data.transforms import Subsample, ToTensor, NeuroNormalizer, AddBehaviorAsChannels, SelectInputChannel
 
@@ -50,6 +50,7 @@ def static_loader(
     include_trial_info_keys: list=None,
     toy_data: bool=None,
     include_px_position=None,
+    image_reshape_list=None,
 
 ):
     """
@@ -142,6 +143,10 @@ def static_loader(
 
     if include_behavior and add_behavior_as_channels:
         more_transforms.insert(0, AddBehaviorAsChannels())
+
+    if image_reshape_list is not None:
+        more_transforms.insert(0, ReshapeImages(image_reshape_list))
+
 
     if normalize:
         try:
@@ -256,6 +261,7 @@ def static_loaders(
     return_test_sampler: bool=None,
     toy_data: bool=None,
     include_px_position=None,
+    image_reshape_list=None,
 ):
     """
     Returns a dictionary of dataloaders (i.e., trainloaders, valloaders, and testloaders) for >= 1 dataset(s).
@@ -331,6 +337,7 @@ def static_loaders(
             return_test_sampler=return_test_sampler,
             toy_data=toy_data,
             include_px_position=include_px_position,
+            image_reshape_list=image_reshape_list,
         )
         if not return_test_sampler:
             for k in dls:
