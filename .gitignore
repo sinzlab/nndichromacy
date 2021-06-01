@@ -24,3 +24,5 @@ secrets/
 *.env
 .env_pipeline
 .env/
+logs/
+*.sif

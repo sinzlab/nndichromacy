@@ -1,24 +1,27 @@
 from __future__ import annotations
-from typing import Callable, Iterable, Mapping, Optional, Tuple, Dict, Any
+from typing import Dict, Any
 
-import datajoint as dj
-from nnfabrik.main import Dataset
-from .from_nnfabrik import TrainedModel
 import torch
 from torch.nn import Module
 from torch.utils.data import DataLoader
 
-from mei import mixins
-from mei.main import MEITemplate, MEISeed
-from mei.modules import ConstrainedOutputModel
-
-from nnfabrik.utility.dj_helpers import CustomSchema
-
 Key = Dict[str, Any]
 Dataloaders = Dict[str, DataLoader]
 
+import warnings
+from functools import partial
+
+import datajoint as dj
+from nnfabrik.main import Dataset
+from nnfabrik.utility.dj_helpers import CustomSchema
+from nnfabrik.builder import resolve_fn
+from mei import mixins
+from mei.main import MEISeed
+from mei.modules import ConstrainedOutputModel
+from .from_nnfabrik import TrainedModel
 
 schema = CustomSchema(dj.config.get("nnfabrik.schema_name", "nnfabrik_core"))
+resolve_target_fn = partial(resolve_fn, default_base="targets")
 
 
 class MouseSelectorTemplate(dj.Computed):
@@ -43,15 +46,29 @@ class MouseSelectorTemplate(dj.Computed):
         mappings = []
         for data_key in data_keys:
             dat = dataloaders["train"][data_key].dataset
-            neuron_ids = dat.neurons.unit_ids
+            try:
+                neuron_ids = dat.neurons.unit_ids
+            except AttributeError:
+                warnings.warn(
+                    "unit_ids were not found in the dataset - using indices 0-N instead"
+                )
+                neuron_ids = range(dat.responses.shape[1])
             for neuron_pos, neuron_id in enumerate(neuron_ids):
-                mappings.append(dict(key, unit_id=neuron_id, unit_index=neuron_pos, data_key=data_key))
+                mappings.append(
+                    dict(
+                        key, unit_id=neuron_id, unit_index=neuron_pos, data_key=data_key
+                    )
+                )
 
         self.insert(mappings)
 
-    def get_output_selected_model(self, model: Module, key: Key) -> constrained_output_model:
+    def get_output_selected_model(
+        self, model: Module, key: Key
+    ) -> constrained_output_model:
         unit_index, data_key = (self & key).fetch1("unit_index", "data_key")
-        return self.constrained_output_model(model, unit_index, forward_kwargs=dict(data_key=data_key))
+        return self.constrained_output_model(
+            model, unit_index, forward_kwargs=dict(data_key=data_key)
+        )
 
 
 @schema
@@ -62,9 +79,16 @@ class MEISelector(MouseSelectorTemplate):
 @schema
 class MEIMethod(mixins.MEIMethodMixin, dj.Lookup):
     seed_table = MEISeed
-    optional_names = optional_names = ("transform", "regularization", "precondition", "postprocessing")
+    optional_names = optional_names = (
+        "transform",
+        "regularization",
+        "precondition",
+        "postprocessing",
+    )
 
-    def generate_mei(self, dataloaders: Dataloaders, model: Module, key: Key, seed: int) -> Dict[str, Any]:
+    def generate_mei(
+        self, dataloaders: Dataloaders, model: Module, key: Key, seed: int
+    ) -> Dict[str, Any]:
         method_fn, method_config = (self & key).fetch1("method_fn", "method_config")
         self.insert_key_in_ops(method_config=method_config, key=key)
         method_fn = self.import_func(method_fn)
@@ -82,8 +106,10 @@ class MEIMethod(mixins.MEIMethodMixin, dj.Lookup):
 class TrainedEnsembleModel(mixins.TrainedEnsembleModelTemplateMixin, dj.Manual):
     dataset_table = Dataset
     trained_model_table = TrainedModel
+
     class Member(mixins.TrainedEnsembleModelTemplateMixin.Member, dj.Part):
         """Member table template."""
+
         pass
 
 
@@ -126,7 +152,9 @@ class MEIScore(dj.Computed):
                     ---
                     {measure_attribute}:      float     # A template for a computed score of a trained model
                     {measure_attribute}_ts=CURRENT_TIMESTAMP: timestamp    # UTZ timestamp at time of insertion
-                    """.format(table_comment=self.table_comment, measure_attribute=self.measure_attribute)
+                    """.format(
+            table_comment=self.table_comment, measure_attribute=self.measure_attribute
+        )
         return definition
 
     @staticmethod
@@ -134,7 +162,11 @@ class MEIScore(dj.Computed):
         raise NotImplementedError("Scoring Function has to be implemented")
 
     def get_mei(self, key):
-        mei = torch.load((self.mei_table & key).fetch1("mei", download_path=self.external_download_path))
+        mei = torch.load(
+            (self.mei_table & key).fetch1(
+                "mei", download_path=self.external_download_path
+            )
+        )
         return mei
 
     def make(self, key):

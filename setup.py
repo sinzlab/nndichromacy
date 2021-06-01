@@ -11,5 +11,5 @@ setup(
     author="Konstantin Willeke",
     author_email="konstantin.willeke@gmail.com",
     packages=find_packages(exclude=[]),
-    install_requires=['sphinx', 'pytorch_sphinx_theme', 'recommonmark'],
+    install_requires=['sphinx', 'pytorch_sphinx_theme', 'recommonmark', 'alphashape', 'shapely', 'opencv-python'],
 )
