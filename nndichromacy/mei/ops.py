@@ -173,6 +173,39 @@ class ClipNormInChannel:
             x[:, self.channel, ...] = torch.clamp(x[:, self.channel, ...], self.x_min, self.x_max)
             return x
 
+class ClipNormInAllChannel: ## when need add transparency to visualization
+    """ Change the norm of the input for different channel separately (i.e. color channel & transparent channel)
+
+    Arguments:
+        norm (float or tensor): Desired norm. If tensor, it should be the same length as
+            x.
+    """
+
+    def __init__(self, channel1,channel2, norm_ch1,norm_ch2, x_min_ch1=None, x_max_ch1=None,
+                         x_min_ch2=None, x_max_ch2=None):
+        self.channel1 = channel1
+        self.norm_ch1 = norm_ch1
+        self.x_min_ch1 = x_min_ch1
+        self.x_max_ch1 = x_max_ch1
+        
+        self.channel2 = channel2
+        self.norm_ch2 = norm_ch2
+        self.x_min_ch2 = x_min_ch2
+        self.x_max_ch2 = x_max_ch2
+
+    @varargin
+    def __call__(self, x, iteration=None):
+        x_norm_ch1 = torch.norm(x[:, self.channel1, ...])
+        x_norm_ch2 = torch.norm(x[:, self.channel2, ...])
+        if x_norm_ch1 > self.norm_ch1:
+            x[:, self.channel1, ...] = x[:, self.channel1, ...] * (self.norm_ch1 / x_norm_ch1)
+        if x_norm_ch2 > self.norm_ch2:
+            x[:, self.channel2, ...] = x[:, self.channel2, ...] * (self.norm_ch2 / x_norm_ch2)
+        #print("before clamp, alpha channel",torch.norm(x[:, self.channel2, ...]))
+        x[:, self.channel1, ...] = torch.clamp(x[:, self.channel1, ...], self.x_min_ch1, self.x_max_ch1)
+        x[:, self.channel2, ...] = torch.clamp(x[:, self.channel2, ...], self.x_min_ch2, self.x_max_ch2)
+        #print("after clamp, alpha channel",torch.norm(x[:, self.channel2, ...]))
+        return x
 
 class ChangeNormShuffleBehavior:
     """ Change the norm of the input.
