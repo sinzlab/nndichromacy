@@ -79,7 +79,9 @@ class MEISelector(MouseSelectorTemplate):
 @schema
 class MEIMethod(mixins.MEIMethodMixin, dj.Lookup):
     seed_table = MEISeed
-    optional_names = optional_names = (
+    optional_names = (
+        "initial",
+        "optimizer",
         "transform",
         "regularization",
         "precondition",
