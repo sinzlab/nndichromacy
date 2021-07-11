@@ -181,7 +181,7 @@ class ClipNormInAllChannel: ## when need add transparency to visualization
             x.
     """
 
-    def __init__(self, channel1,channel2, norm_ch1,norm_ch2, x_min_ch1=None, x_max_ch1=None,
+    def __init__(self, channel1,channel2, norm_ch1,norm_ch2=None, x_min_ch1=None, x_max_ch1=None,
                          x_min_ch2=None, x_max_ch2=None):
         self.channel1 = channel1
         self.norm_ch1 = norm_ch1
@@ -199,12 +199,12 @@ class ClipNormInAllChannel: ## when need add transparency to visualization
         x_norm_ch2 = torch.norm(x[:, self.channel2, ...])
         if x_norm_ch1 > self.norm_ch1:
             x[:, self.channel1, ...] = x[:, self.channel1, ...] * (self.norm_ch1 / x_norm_ch1)
-        if x_norm_ch2 > self.norm_ch2:
-            x[:, self.channel2, ...] = x[:, self.channel2, ...] * (self.norm_ch2 / x_norm_ch2)
+        #if x_norm_ch2 > self.norm_ch2:
+        #    x[:, self.channel2, ...] = x[:, self.channel2, ...] * (self.norm_ch2 / x_norm_ch2)
         #print("before clamp, alpha channel",torch.norm(x[:, self.channel2, ...]))
         x[:, self.channel1, ...] = torch.clamp(x[:, self.channel1, ...], self.x_min_ch1, self.x_max_ch1)
         x[:, self.channel2, ...] = torch.clamp(x[:, self.channel2, ...], self.x_min_ch2, self.x_max_ch2)
-        #print("after clamp, alpha channel",torch.norm(x[:, self.channel2, ...]))
+        #print("after clamp, alpha channel",torch.norm(x[:, self.channel2, ...]).item())
         return x
 
 class ChangeNormShuffleBehavior:
