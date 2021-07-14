@@ -8,13 +8,25 @@ from torch.nn import functional as F
 
 class Encoder(nn.Module):
 
-    def __init__(self, core, readout, elu_offset, shifter=None):
+    def __init__(self, core, readout, elu_offset, linear, shifter=None ):
         super().__init__()
         self.core = core
         self.readout = readout
         self.offset = elu_offset
         self.shifter = shifter
+        self.linear = linear # True or False
+        if self.linear == True:
+            self.a1=nn.Parameter(torch.Tensor(1))
+            self.register_parameter("a1", a1)
 
+            self.b1=nn.Parameter(torch.Tensor(1))
+            self.register_parameter("b1", b1)
+
+            self.a2=nn.Parameter(torch.Tensor(1))
+            self.register_parameter("a2", a2)
+
+            self.b2=nn.Parameter(torch.Tensor(1))
+            self.register_parameter("b2", b2)
 
     def forward(self, *args, data_key=None, eye_pos=None, shift=None, trial_idx=None, **kwargs):
 
@@ -52,6 +64,11 @@ class Encoder(nn.Module):
             shift = self.shifter[data_key](eye_pos)
 
         x = self.readout(x, data_key=data_key, shift=shift, **kwargs)
+         
+        if self.linear==True:
+            x = F.elu(x*self.a1+self.b1)
+            x = x*self.a2+self.b2
+            print(a1,b1,a2,b2)
         return F.elu(x + self.offset) + 1
 
     def regularizer(self, data_key):
