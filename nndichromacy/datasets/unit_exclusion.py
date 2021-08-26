@@ -44,10 +44,15 @@ def concave_hull_pca_selector(
     """
 
     data_key = list(dataloaders["train"].keys())[0]
-    responses = []
-    for b in dataloaders["train"][data_key]:
-        responses.append(b.responses)
-    responses = torch.vstack(responses).cpu().numpy()
+
+    dat = dataloaders["train"][data_key].dataset
+    if "probe" in dat.trial_info.tiers:
+        responses = np.array([dat[i].responses.cpu().numpy() for i in np.where(dat.trial_info.tiers=="probe")[0]])
+    else:
+        responses = []
+        for b in dataloaders["train"][data_key]:
+            responses.append(b.responses)
+        responses = torch.vstack(responses).cpu().numpy()
     pipeline = Pipeline(
         [("scaling", StandardScaler()), ("pca", PCA(n_components=None))]
     )

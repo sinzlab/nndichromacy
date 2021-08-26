@@ -286,7 +286,7 @@ def add_h5_to_preprocessed_table(path, keys, comments, ignore_all_behaviors=Fals
 
     for datafile in datasets:
         if datafile.endswith('.h5'):
-            FileTreeDataset.initialize_from(datafile, ignore_all_behaviors=ignore_all_behaviors)
+            FileTreeDataset.initialize_from(datafile,)
 
     for key in (experiment.Scan() & keys).fetch('KEY'):
         if filenames is None:
