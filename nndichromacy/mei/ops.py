@@ -174,6 +174,44 @@ class ClipNormInChannel:
             return x
 
 
+class ClipNormInChannelAdaptivePupil:
+    """ Change the norm of the input.
+
+    Arguments:
+        norm (float or tensor): Desired norm. If tensor, it should be the same length as
+            x.
+    """
+
+    def __init__(self, channel, norm, key, threshold_percentile, pupil_channel, x_min=None, x_max=None, ):
+        self.channel = channel
+        self.norm = norm
+        self.x_min = x_min
+        self.x_max = x_max
+        self.pupil_channel = pupil_channel
+
+        from ..tables.from_nnfabrik import Dataset
+        dataloaders = (Dataset & key).get_dataloader()
+        behaviors = []
+        for b in dataloaders["train"][key["data_key"]]:
+            behaviors.append(b.behavior.cpu().numpy())
+        behaviors = np.vstack(behaviors)
+        self.min_pupil = np.percentile(behaviors[:, 0], 0)
+        self.max_pupil = np.percentile(behaviors[:, 0], threshold_percentile)
+
+    @varargin
+    def __call__(self, x, iteration=None):
+
+        x[:, self.pupil_channel, ...] = np.random.uniform(self.min_pupil, self.max_pupil)
+        x_norm = torch.norm(x[:, self.channel, ...])
+        if x_norm > self.norm:
+            x[:, self.channel, ...] = x[:, self.channel, ...] * (self.norm / x_norm)
+        if self.x_min is None:
+            return x
+        else:
+            x[:, self.channel, ...] = torch.clamp(x[:, self.channel, ...], self.x_min, self.x_max)
+            return x
+
+
 class ChangeNormShuffleBehavior:
     """ Change the norm of the input.
 
