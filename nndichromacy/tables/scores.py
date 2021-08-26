@@ -369,6 +369,7 @@ class FractionOracleJackknife(SummaryScoringTable):
 @schema
 class FractionOracleJackknifeEnsemble(SummaryScoringTable):
     trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
     measure_function = staticmethod(get_fraction_oracles)
     measure_dataset = "test"
     measure_attribute = "fraction_oracle_jackknife"
