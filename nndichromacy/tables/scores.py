@@ -195,6 +195,18 @@ class CorrelationToAvergeEnsemble(ScoringTable):
 
 
 @schema
+class R2erEnsemble(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_r2er)
+    measure_dataset = "test"
+    measure_attribute = "r2_er"
+    data_cache = None
+    model_cache = None
+
+
+@schema
 class TestCorrEnsembleBlueSet(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
