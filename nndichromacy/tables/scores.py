@@ -15,7 +15,8 @@ from ..utility.measures import (get_oracles,
                                 get_mei_norm,
                                 get_mei_color_bias,
                                 get_conservative_avg_correlations,
-                                get_mei_michelson_contrast)
+                                get_mei_michelson_contrast,
+                                get_r2er)
 from .from_nnfabrik import TrainedModel, ScoringTable, SummaryScoringTable
 from .from_mei import MEISelector, TrainedEnsembleModel
 from .from_reconstruction import Reconstruction
@@ -35,6 +36,18 @@ class CorrelationToAverge(ScoringTable):
     measure_function = staticmethod(get_avg_correlations)
     measure_dataset = "test"
     measure_attribute = "avg_correlation"
+    data_cache = DataCache
+    model_cache = TrainedModelCache
+
+
+@schema
+class R2er(ScoringTable):
+    trainedmodel_table = TrainedModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_r2er)
+    measure_dataset = "test"
+    measure_attribute = "r2_er"
     data_cache = DataCache
     model_cache = TrainedModelCache
 
