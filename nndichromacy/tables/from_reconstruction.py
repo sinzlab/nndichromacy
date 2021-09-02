@@ -304,7 +304,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
             return definition
 
     def get_model_responses(
-        self, model, key, image, device="cuda", forward_kwargs=None
+        self, model, key, image, device="cuda", forward_kwargs=None, constraint=None,
     ):
         model.eval()
         model.to(device)
@@ -315,7 +315,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
                 data_key=key["data_key"],
                 **forward_kwargs,
             )
-        return responses
+        return responses if constraint is None or len(constraint) == 0 else responses[:, constraint]
 
     def get_neuronal_responses(self, dataloaders, key, method_config, return_behavior=False, return_image=False,):
         data_key = (self.target_unit_table & key).fetch1("data_key")
@@ -387,6 +387,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
         recon_type = (self.recon_type_table & key).fetch1("recon_type")
 
         if recon_type == "neurons":
+            #TODO: Make constraint based on unit IDs work (only works for model)
             responses, behavior, image = self.get_neuronal_responses(
                 dataloaders=dataloaders, key=key, return_behavior=True, method_config=method_config, return_image=True,
             )
@@ -412,11 +413,14 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
             )
             image = process_image(initial_img=initial_img, image=image)
 
+            constraint = (self.target_unit_table & key).fetch1("unit_ids")
+
             responses = self.get_model_responses(
                 model=model,
                 key=key,
                 image=image,
                 forward_kwargs=method_config.get("model_forward_kwargs", None),
+                constraint=constraint,
             )
 
         target_fn = (self.target_fn_table & key).get_target_fn(responses=responses)
@@ -435,6 +439,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
         )
 
         reconstructed_image = mei_entity["mei"]
+        #TODO: fix bug when using a constraint in the SelectorTable.
         reconstructed_responses = self.get_model_responses(
             model=model,
             key=key,
