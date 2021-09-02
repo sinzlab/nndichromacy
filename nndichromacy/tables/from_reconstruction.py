@@ -78,6 +78,27 @@ class ReconMethod(mixins.MEIMethodMixin, dj.Lookup):
                     v["kwargs"]["key"] = key
 
 
+
+@schema
+class ReconMethodExperiments(dj.Manual):
+    definition = """
+    experiment_name: varchar(100)                     # name of experiment
+    ---
+    -> Fabrikant.proj(experiment_fabrikant='fabrikant_name')
+    experiment_comment='': varchar(2000)              # short description 
+    experiment_ts=CURRENT_TIMESTAMP:   timestamp      # UTZ timestamp at time of insertion
+    """
+
+    class Restrictions(dj.Part):
+        definition = """
+        # This table contains the corresponding hashes to filter out models which form the respective experiment
+        -> master
+        -> ReconMethod
+        ---
+        experiment_restriction_ts=CURRENT_TIMESTAMP:   timestamp      # UTZ timestamp at time of insertion
+    """
+
+
 @schema
 class ReconTargetFunction(dj.Manual):
     definition = """
