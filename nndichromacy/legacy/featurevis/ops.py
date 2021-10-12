@@ -9,7 +9,7 @@ from nndichromacy.legacy.featurevis.utils import varargin
 
 ################################## REGULARIZERS ##########################################
 class TotalVariation:
-    """ Total variation regularization.
+    """Total variation regularization.
 
     Arguments:
         weight (float): Weight of the regularization.
@@ -28,10 +28,14 @@ class TotalVariation:
         diffs_x = torch.abs(x[:, :, :, 1:] - x[:, :, :, :-1])
         if self.isotropic:
             tv = (
-                torch.sqrt(diffs_y[:, :, :, :-1] ** 2 + diffs_x[:, :, :-1, :] ** 2).reshape(len(x), -1).sum(-1)
+                torch.sqrt(diffs_y[:, :, :, :-1] ** 2 + diffs_x[:, :, :-1, :] ** 2)
+                .reshape(len(x), -1)
+                .sum(-1)
             )  # per image
         else:
-            tv = diffs_y.reshape(len(x), -1).sum(-1) + diffs_x.reshape(len(x), -1).sum(-1)  # per image
+            tv = diffs_y.reshape(len(x), -1).sum(-1) + diffs_x.reshape(len(x), -1).sum(
+                -1
+            )  # per image
         loss = self.weight * torch.mean(tv)
 
         return loss
@@ -57,7 +61,7 @@ class LpNorm:
 
 
 class Similarity:
-    """ Compute similarity metrics across all examples in one batch.
+    """Compute similarity metrics across all examples in one batch.
 
     Arguments:
         weight (float): Weight of the regularization.
@@ -79,7 +83,9 @@ class Similarity:
     @varargin
     def __call__(self, x):
         if len(x) < 2:
-            warnings.warn("Only one image in the batch. Similarity regularization will" "return 0")
+            warnings.warn(
+                "Only one image in the batch. Similarity regularization will" "return 0"
+            )
             return 0
 
         # Mask x
@@ -93,10 +99,16 @@ class Similarity:
                 numer = torch.mm(residuals, residuals.t())
                 ssr = (residuals ** 2).sum(-1)
             else:
-                mask_sum = self.mask.sum() * (flat_x.shape[-1] / len(self.mask.view(-1)))
+                mask_sum = self.mask.sum() * (
+                    flat_x.shape[-1] / len(self.mask.view(-1))
+                )
                 mean = flat_x.sum(-1) / mask_sum
                 residuals = x - mean.view(len(x), *[1] * (x.dim() - 1))  # N x 1 x 1 x 1
-                numer = (residuals[None, :] * residuals[:, None] * self.mask).view(len(x), len(x), -1).sum(-1)
+                numer = (
+                    (residuals[None, :] * residuals[:, None] * self.mask)
+                    .view(len(x), len(x), -1)
+                    .sum(-1)
+                )
                 ssr = ((residuals ** 2) * self.mask).view(len(x), -1).sum(-1)
             sim_matrix = numer / (torch.sqrt(torch.ger(ssr, ssr)) + 1e-9)
         elif self.metric == "cosine":
@@ -131,20 +143,26 @@ class Similarity:
 
 ################################ TRANSFORMS ##############################################
 class Jitter:
-    """ Jitter the image at random by some certain amount.
+    """Jitter the image at random by some certain amount.
 
     Arguments:
         max_jitter(tuple of ints): Maximum amount of jitter in y, x.
     """
 
     def __init__(self, max_jitter):
-        self.max_jitter = max_jitter if isinstance(max_jitter, tuple) else (max_jitter, max_jitter)
+        self.max_jitter = (
+            max_jitter if isinstance(max_jitter, tuple) else (max_jitter, max_jitter)
+        )
 
     @varargin
     def __call__(self, x):
         # Sample how much to jitter
-        jitter_y = torch.randint(-self.max_jitter[0], self.max_jitter[0] + 1, (1,), dtype=torch.int32).item()
-        jitter_x = torch.randint(-self.max_jitter[1], self.max_jitter[1] + 1, (1,), dtype=torch.int32).item()
+        jitter_y = torch.randint(
+            -self.max_jitter[0], self.max_jitter[0] + 1, (1,), dtype=torch.int32
+        ).item()
+        jitter_x = torch.randint(
+            -self.max_jitter[1], self.max_jitter[1] + 1, (1,), dtype=torch.int32
+        ).item()
 
         # Pad and crop the rest
         pad_y = (jitter_y, 0) if jitter_y >= 0 else (0, -jitter_y)
@@ -163,7 +181,7 @@ class Jitter:
 
 
 class RandomCrop:
-    """ Take a random crop of the input image.
+    """Take a random crop of the input image.
 
     Arguments:
         height (int): Height of the crop.
@@ -176,15 +194,19 @@ class RandomCrop:
 
     @varargin
     def __call__(self, x):
-        crop_y = torch.randint(0, max(0, x.shape[-2] - self.height) + 1, (1,), dtype=torch.int32).item()
-        crop_x = torch.randint(0, max(0, x.shape[-1] - self.width) + 1, (1,), dtype=torch.int32).item()
+        crop_y = torch.randint(
+            0, max(0, x.shape[-2] - self.height) + 1, (1,), dtype=torch.int32
+        ).item()
+        crop_x = torch.randint(
+            0, max(0, x.shape[-1] - self.width) + 1, (1,), dtype=torch.int32
+        ).item()
         cropped_x = x[..., crop_y : crop_y + self.height, crop_x : crop_x + self.width]
 
         return cropped_x
 
 
 class BatchedCrops:
-    """ Create a batch of crops of the original image.
+    """Create a batch of crops of the original image.
 
     Arguments:
         height (int): Height of the crop
@@ -203,7 +225,9 @@ class BatchedCrops:
         self.height = height
         self.width = width
         self.step_size = step_size if isinstance(step_size, tuple) else (step_size,) * 2
-        self.sigma = sigma if sigma is None or isinstance(sigma, tuple) else (sigma,) * 2
+        self.sigma = (
+            sigma if sigma is None or isinstance(sigma, tuple) else (sigma,) * 2
+        )
 
         # If needed, create gaussian mask
         if sigma is not None:
@@ -234,7 +258,7 @@ class BatchedCrops:
 
 
 class ChangeRange:
-    """ This changes the range of x as follows:
+    """This changes the range of x as follows:
         new_x = sigmoid(x) * (desired_max - desired_min) + desired_min
 
     Arguments:
@@ -255,7 +279,7 @@ class ChangeRange:
 
 
 class Resize:
-    """ Resize images.
+    """Resize images.
 
     Arguments:
         scale_factor (float): Factor to rescale the images:
@@ -278,7 +302,7 @@ class Resize:
 
 
 class GrayscaleToRGB:
-    """ Transforms a single channel image into three channels (by copying the channel)."""
+    """Transforms a single channel image into three channels (by copying the channel)."""
 
     @varargin
     def __call__(self, x):
@@ -289,7 +313,7 @@ class GrayscaleToRGB:
 
 
 class Identity:
-    """ Transform that returns the input as is."""
+    """Transform that returns the input as is."""
 
     @varargin
     def __call__(self, x):
@@ -298,7 +322,7 @@ class Identity:
 
 ############################## GRADIENT OPERATIONS #######################################
 class ChangeNorm:
-    """ Change the norm of the input.
+    """Change the norm of the input.
 
     Arguments:
         norm (float or tensor): Desired norm. If tensor, it should be the same length as
@@ -333,7 +357,7 @@ class ClipRange:
 
 
 class FourierSmoothing:
-    """ Smooth the input in the frequency domain.
+    """Smooth the input in the frequency domain.
 
     Image is transformed to fourier domain, power densities at i, j are multiplied by
     (1 - ||f||)**freq_exp where ||f|| = sqrt(f_i**2 + f_j**2) and the image is brought
@@ -357,7 +381,10 @@ class FourierSmoothing:
         h, w = x.shape[-2:]
         freq_y = (
             torch.cat(
-                [torch.arange((h - 1) // 2 + 1, dtype=torch.float32), -torch.arange(h // 2, 0, -1, dtype=torch.float32)]
+                [
+                    torch.arange((h - 1) // 2 + 1, dtype=torch.float32),
+                    -torch.arange(h // 2, 0, -1, dtype=torch.float32),
+                ]
             )
             / h
         )  # fftfreq
@@ -376,7 +403,7 @@ class FourierSmoothing:
 
 
 class DivideByMeanOfAbsolute:
-    """ Divides x by the mean of absolute x. """
+    """Divides x by the mean of absolute x."""
 
     @varargin
     def __call__(self, x):
@@ -408,7 +435,7 @@ class MultiplyBy:
 
 ########################### POST UPDATE OPERATIONS #######################################
 class GaussianBlur:
-    """ Blur an image with a Gaussian window.
+    """Blur an image with a Gaussian window.
 
     Arguments:
         sigma (float or tuple): Standard deviation in y, x used for the gaussian blurring.
@@ -445,19 +472,27 @@ class GaussianBlur:
         x_gaussian = torch.as_tensor(x_gaussian, device=x.device, dtype=x.dtype)
 
         # Blur
-        padded_x = F.pad(x, pad=(x_halfsize, x_halfsize, y_halfsize, y_halfsize), mode=self.pad_mode)
-        blurred_x = F.conv2d(padded_x, y_gaussian.repeat(num_channels, 1, 1)[..., None], groups=num_channels)
-        blurred_x = F.conv2d(blurred_x, x_gaussian.repeat(num_channels, 1, 1, 1), groups=num_channels)
+        padded_x = F.pad(
+            x, pad=(x_halfsize, x_halfsize, y_halfsize, y_halfsize), mode=self.pad_mode
+        )
+        blurred_x = F.conv2d(
+            padded_x,
+            y_gaussian.repeat(num_channels, 1, 1)[..., None],
+            groups=num_channels,
+        )
+        blurred_x = F.conv2d(
+            blurred_x, x_gaussian.repeat(num_channels, 1, 1, 1), groups=num_channels
+        )
         final_x = blurred_x / (y_gaussian.sum() * x_gaussian.sum())  # normalize
 
         return final_x
 
 
 class ChangeStd:
-    """ Change the standard deviation of input.
+    """Change the standard deviation of input.
 
-        Arguments:
-        std (float or tensor): Desired std. If tensor, it should be the same length as x.
+    Arguments:
+    std (float or tensor): Desired std. If tensor, it should be the same length as x.
     """
 
     def __init__(self, std):

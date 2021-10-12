@@ -618,7 +618,9 @@ def se_core_behavior_gauss(
             _, targets = next(iter(value))[:2]
             readout[key].bias.data = targets.mean(0)
 
-    model = GeneralEncoder(core=core, readout=readout, elu_offset=elu_offset, shifter=shifter)
+    model = GeneralEncoder(
+        core=core, readout=readout, elu_offset=elu_offset, shifter=shifter
+    )
 
     return model
 

@@ -20,7 +20,7 @@ def gradient_ascent(
     save_iters=None,
     print_iters=100,
 ):
-    """ Maximize f(x) via gradient ascent.
+    """Maximize f(x) via gradient ascent.
 
     Objective: f(transform(x)) - regularization(transform(x))
     Update: x_{t+1} = post_update(x_{t} + step_size * gradient_f(x_{t}.grad))
@@ -115,14 +115,20 @@ def gradient_ascent(
         # Cleanup
         if post_update is not None:
             with torch.no_grad():
-                x[:] = post_update(x, iteration=i)  # in place so the optimizer still points to the right object
+                x[:] = post_update(
+                    x, iteration=i
+                )  # in place so the optimizer still points to the right object
 
         # Report results
         if i % print_iters == 0:
             feval = feval.item()
             reg_term = reg_term if regularization is None else reg_term.item()
             x_std = x.std().item()
-            print("Iter {}: f(x) = {:.2f}, reg(x) = {:.2f}, std(x) = {:.2f}".format(i, feval, reg_term, x_std))
+            print(
+                "Iter {}: f(x) = {:.2f}, reg(x) = {:.2f}, std(x) = {:.2f}".format(
+                    i, feval, reg_term, x_std
+                )
+            )
 
         # Save x
         if save_iters is not None and i % save_iters == 0:

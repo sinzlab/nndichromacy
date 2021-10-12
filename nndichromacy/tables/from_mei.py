@@ -176,5 +176,3 @@ class MEIScore(dj.Computed):
         score = self.measure_function(mei, **self.function_kwargs)
         key[self.measure_attribute] = score
         self.insert1(key, ignore_extra_fields=True)
-
-

@@ -7,7 +7,13 @@ from nnfabrik.utility.nnf_helper import split_module_name, dynamic_import
 from nnfabrik.utility.dj_helpers import make_hash
 
 
-def load_ensemble_model(member_table, trained_model_table, key=None, include_dataloader=True, include_state_dict=True):
+def load_ensemble_model(
+    member_table,
+    trained_model_table,
+    key=None,
+    include_dataloader=True,
+    include_state_dict=True,
+):
     """Loads an ensemble model.
 
     Args:
@@ -32,15 +38,28 @@ def load_ensemble_model(member_table, trained_model_table, key=None, include_dat
         query = member_table()
     model_keys = query.fetch(as_dict=True)
     if include_dataloader:
-        dataloaders, models = tuple(list(x) for x in zip(*[trained_model_table().load_model(key=k,
-                                                                                            include_dataloader=include_dataloader,
-                                                                                            include_state_dict=include_state_dict)
-                                                           for k in model_keys]))
+        dataloaders, models = tuple(
+            list(x)
+            for x in zip(
+                *[
+                    trained_model_table().load_model(
+                        key=k,
+                        include_dataloader=include_dataloader,
+                        include_state_dict=include_state_dict,
+                    )
+                    for k in model_keys
+                ]
+            )
+        )
     else:
-        models = [trained_model_table().load_model(key=k,
-                                                   include_dataloader=include_dataloader,
-                                                   include_state_dict=include_state_dict)
-                  for k in model_keys]
+        models = [
+            trained_model_table().load_model(
+                key=k,
+                include_dataloader=include_dataloader,
+                include_state_dict=include_state_dict,
+            )
+            for k in model_keys
+        ]
 
     for model in models:
         model.eval()
@@ -50,6 +69,7 @@ def load_ensemble_model(member_table, trained_model_table, key=None, include_dat
         return dataloaders[0], ensemble_model
     else:
         return ensemble_model
+
 
 def get_output_selected_model(neuron_pos, session_id, model):
     """Creates a version of the model that has its output selected down to a single uniquely identified neuron.
@@ -80,7 +100,14 @@ def get_mappings(dataset_config, key, load_func=None):
     for datafile_path in dataset_config["datafiles"]:
         data = load_func(datafile_path)
         for neuron_pos, neuron_id in enumerate(data["unit_indices"]):
-            entities.append(dict(key, neuron_id=neuron_id, neuron_position=neuron_pos, session_id=data["session_id"]))
+            entities.append(
+                dict(
+                    key,
+                    neuron_id=neuron_id,
+                    neuron_position=neuron_pos,
+                    session_id=data["session_id"],
+                )
+            )
     return entities
 
 

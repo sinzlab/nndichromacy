@@ -2,21 +2,23 @@ import datajoint as dj
 
 from nnfabrik.main import Model, Dataset, Trainer, Seed, Fabrikant
 
-from ..utility.measures import (get_oracles,
-                                get_repeats,
-                                get_FEV,
-                                get_explainable_var,
-                                get_correlations,
-                                get_poisson_loss,
-                                get_avg_correlations,
-                                get_predictions,
-                                get_targets,
-                                get_fraction_oracles,
-                                get_mei_norm,
-                                get_mei_color_bias,
-                                get_conservative_avg_correlations,
-                                get_mei_michelson_contrast,
-                                get_r2er)
+from ..utility.measures import (
+    get_oracles,
+    get_repeats,
+    get_FEV,
+    get_explainable_var,
+    get_correlations,
+    get_poisson_loss,
+    get_avg_correlations,
+    get_predictions,
+    get_targets,
+    get_fraction_oracles,
+    get_mei_norm,
+    get_mei_color_bias,
+    get_conservative_avg_correlations,
+    get_mei_michelson_contrast,
+    get_r2er,
+)
 from .from_nnfabrik import TrainedModel, ScoringTable, SummaryScoringTable
 from .from_mei import MEISelector, TrainedEnsembleModel
 from .from_reconstruction import Reconstruction
@@ -25,7 +27,7 @@ from nnfabrik.utility.dj_helpers import CustomSchema
 from .from_mei import MEIScore
 
 schema = CustomSchema(dj.config.get("nnfabrik.schema_name", "nnfabrik_core"))
-fetch_download_path = '/data/fetched_from_attach/'
+fetch_download_path = "/data/fetched_from_attach/"
 
 
 @schema
@@ -97,7 +99,7 @@ class TestCorrelationBlueTestSet(ScoringTable):
     measure_dataset = "test"
     measure_attribute = "test_correlation_blue"
     data_cache = DataCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_blue_only')
+    dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb_blue_only")
 
 
 @schema
@@ -109,7 +111,7 @@ class TestCorrelationGreenTestSet(ScoringTable):
     measure_dataset = "test"
     measure_attribute = "test_correlation_green"
     data_cache = DataCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_green_only')
+    dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb_green_only")
 
 
 @schema
@@ -121,7 +123,9 @@ class TestCorrelationDependentTestSet(ScoringTable):
     measure_dataset = "test"
     measure_attribute = "test_correlation_dependent"
     data_cache = DataCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_gb_g_biased_correlated')
+    dataloader_function_kwargs = dict(
+        image_condition="imagenet_v2_rgb_gb_g_biased_correlated"
+    )
 
 
 @schema
@@ -133,7 +137,7 @@ class TestCorrelationDependenthighMSE(ScoringTable):
     measure_dataset = "test"
     measure_attribute = "test_correlation_dependent"
     data_cache = DataCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb')
+    dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb")
 
 
 @schema
@@ -240,7 +244,7 @@ class TestCorrEnsembleBlueSet(ScoringTable):
     measure_attribute = "test_correlation_blue"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_blue_only')
+    dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb_blue_only")
 
 
 @schema
@@ -253,7 +257,7 @@ class TestCorrEnsembleGreenSet(ScoringTable):
     measure_attribute = "test_correlation_green"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_green_only')
+    dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb_green_only")
 
 
 @schema
@@ -266,7 +270,9 @@ class TestCorrEnsembleDepSet(ScoringTable):
     measure_attribute = "test_correlation_dependent"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_gb_g_biased_correlated')
+    dataloader_function_kwargs = dict(
+        image_condition="imagenet_v2_rgb_gb_g_biased_correlated"
+    )
 
 
 @schema
@@ -279,7 +285,7 @@ class TestCorrEnsembleDepSetHighMSE(ScoringTable):
     measure_attribute = "test_correlation_dependent"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb')
+    dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb")
 
 
 @schema
@@ -292,7 +298,7 @@ class CorrToAvgEnsembleBlueSet(ScoringTable):
     measure_attribute = "avg_test_correlation_blue"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_blue_only')
+    dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb_blue_only")
 
 
 @schema
@@ -305,7 +311,7 @@ class CorrToAvgEnsembleGreenSet(ScoringTable):
     measure_attribute = "avg_test_correlation_green"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_green_only')
+    dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb_green_only")
 
 
 @schema
@@ -318,7 +324,9 @@ class CorrToAvgEnsembleDepSet(ScoringTable):
     measure_attribute = "avg_test_correlation_dependent"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_gb_g_biased_correlated')
+    dataloader_function_kwargs = dict(
+        image_condition="imagenet_v2_rgb_gb_g_biased_correlated"
+    )
 
 
 @schema
@@ -331,21 +339,7 @@ class CorrToAvgEnsembleDepSetHighMSE(ScoringTable):
     measure_attribute = "avg_test_correlation_dependent"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb')
-
-
-
-@schema
-class CtAEnsembleBlueHigh(ScoringTable):
-    trainedmodel_table = TrainedEnsembleModel
-    dataset_table = Dataset
-    unit_table = MEISelector
-    measure_function = staticmethod(get_avg_correlations)
-    measure_dataset = "test"
-    measure_attribute = "avg_test_corr_blue_high"
-    data_cache = DataCache
-    model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='image_class_rgb_blue_high')
+    dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb")
 
 
 @schema
@@ -358,7 +352,20 @@ class CtAEnsembleBlueHigh(ScoringTable):
     measure_attribute = "avg_test_corr_blue_high"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='image_class_rgb_blue_high')
+    dataloader_function_kwargs = dict(image_condition="image_class_rgb_blue_high")
+
+
+@schema
+class CtAEnsembleBlueHigh(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "avg_test_corr_blue_high"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition="image_class_rgb_blue_high")
 
 
 @schema
@@ -371,7 +378,7 @@ class CtAEnsembleBlueLow(ScoringTable):
     measure_attribute = "avg_test_corr_blue_low"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_blue_only_bckgr')
+    dataloader_function_kwargs = dict(image_condition="imagenet_v2_blue_only_bckgr")
 
 
 @schema
@@ -384,7 +391,7 @@ class CtAEnsembleGreenHigh(ScoringTable):
     measure_attribute = "avg_test_corr_green_high"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_green_high')
+    dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb_green_high")
 
 
 @schema
@@ -397,12 +404,11 @@ class CtAEnsembleGreenLow(ScoringTable):
     measure_attribute = "avg_test_corr_green_low"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_green_only_bckgr')
-
-
+    dataloader_function_kwargs = dict(image_condition="imagenet_v2_green_only_bckgr")
 
 
 ##### ============ Summary Scores ============ #####
+
 
 @schema
 class FractionOracleJackknife(SummaryScoringTable):
@@ -412,7 +418,6 @@ class FractionOracleJackknife(SummaryScoringTable):
     measure_attribute = "fraction_oracle_jackknife"
     data_cache = None
     model_cache = None
-
 
 
 @schema
@@ -436,7 +441,7 @@ class FractionOracleJackknifeEnsembleDepSetHighMSE(SummaryScoringTable):
     measure_attribute = "fraction_oracle_jackknife_dependent"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb')
+    dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb")
 
 
 @schema
@@ -449,7 +454,7 @@ class FractionOracleJackknifeEnsembleBlueSet(SummaryScoringTable):
     measure_attribute = "fraction_oracle_jackknife_blue"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_blue_only')
+    dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb_blue_only")
 
 
 @schema
@@ -462,7 +467,7 @@ class FractionOracleJackknifeEnsembleGreenSet(SummaryScoringTable):
     measure_attribute = "fraction_oracle_jackknife_green"
     data_cache = DataCache
     model_cache = EnsembleModelCache
-    dataloader_function_kwargs = dict(image_condition='imagenet_v2_rgb_green_only')
+    dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb_green_only")
 
 
 @schema

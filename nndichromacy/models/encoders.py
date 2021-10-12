@@ -7,7 +7,6 @@ from torch.nn import functional as F
 
 
 class Encoder(nn.Module):
-
     def __init__(self, core, readout, elu_offset, shifter=None):
         super().__init__()
         self.core = core
@@ -15,13 +14,14 @@ class Encoder(nn.Module):
         self.offset = elu_offset
         self.shifter = shifter
 
-
-    def forward(self, *args, data_key=None, eye_pos=None, shift=None, trial_idx=None, **kwargs):
+    def forward(
+        self, *args, data_key=None, eye_pos=None, shift=None, trial_idx=None, **kwargs
+    ):
 
         x = self.core(args[0])
         if len(args) > 2:
             for j in range(2, len(args)):
-                if hasattr(args[j], 'shape'):
+                if hasattr(args[j], "shape"):
                     if len(args[j].shape) == 2:
                         if args[j].shape[1] == 2:
                             eye_pos = args[j]
@@ -39,13 +39,13 @@ class Encoder(nn.Module):
                 eye_pos = torch.tensor(eye_pos)
             eye_pos = eye_pos.to(x.device).to(dtype=x.dtype)
 
-            #import ipdb; ipdb.set_trace()
+            # import ipdb; ipdb.set_trace()
             if trial_idx is not None:
                 if not isinstance(trial_idx, torch.Tensor):
                     trial_idx = torch.tensor(trial_idx)
                 trial_idx = trial_idx.to(x.device).to(dtype=x.dtype)
 
-                #ipdb.set_trace()
+                # ipdb.set_trace()
                 if self.shifter[data_key].mlp[0].in_features == 3:
                     eye_pos = torch.cat((eye_pos, trial_idx), dim=1)
 
@@ -59,14 +59,12 @@ class Encoder(nn.Module):
 
 
 class EncoderShifter(nn.Module):
-
     def __init__(self, core, readout, shifter, elu_offset):
         super().__init__()
         self.core = core
         self.readout = readout
         self.offset = elu_offset
         self.shifter = shifter
-
 
     def forward(self, *args, data_key=None, eye_position=None, **kwargs):
 
@@ -80,8 +78,7 @@ class EncoderShifter(nn.Module):
             if args[3].shape[1] == 2:
                 eye_position = args[3]
 
-
-        sample = kwargs["sample"] if 'sample' in kwargs else None
+        sample = kwargs["sample"] if "sample" in kwargs else None
         x = self.readout(x, data_key=data_key, sample=sample)
         return F.elu(x + self.offset) + 1
 
@@ -90,7 +87,6 @@ class EncoderShifter(nn.Module):
 
 
 class GeneralEncoder(nn.Module):
-
     def __init__(self, core, readout, elu_offset, shifter=None):
         super().__init__()
         self.core = core
@@ -119,7 +115,6 @@ class GeneralEncoder(nn.Module):
             pupil_center = eye_pos.to(x.device).to(dtype=x.dtype)
 
         shift = kwargs.get("shift", None)
-
 
         if pupil_center is not None and self.shifter is not None:
             if not isinstance(pupil_center, torch.Tensor):

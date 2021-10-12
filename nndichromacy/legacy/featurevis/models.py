@@ -4,7 +4,7 @@ from nndichromacy.legacy.featurevis.utils import varargin
 
 
 class Ensemble:
-    """ Average the response across a set of models.
+    """Average the response across a set of models.
 
     Arguments:
         models (list): A list of pytorch models.
@@ -53,7 +53,9 @@ class Ensemble:
 
     def __call__(self, x):
         resps = [
-            m(x, self.readout_key, eye_pos=self.eye_pos, behavior=self.behavior)[:, self.neuron_idx]
+            m(x, self.readout_key, eye_pos=self.eye_pos, behavior=self.behavior)[
+                :, self.neuron_idx
+            ]
             for m in self.models
         ]
         resps = torch.stack(resps)  # num_models x batch_size x num_neurons
@@ -63,7 +65,7 @@ class Ensemble:
 
 
 class VGG19Core:
-    """ A pretrained VGG-19. Output will be intermediate feature representation
+    """A pretrained VGG-19. Output will be intermediate feature representation
     (N x C x H x W) at the desired layer.
 
     Arguments:
@@ -75,7 +77,11 @@ class VGG19Core:
     def __init__(self, layer, use_batchnorm=True, device="cuda"):
         from torchvision import models
 
-        vgg19 = models.vgg19_bn(pretrained=True) if use_batchnorm else models.vgg19(pretrained=True)
+        vgg19 = (
+            models.vgg19_bn(pretrained=True)
+            if use_batchnorm
+            else models.vgg19(pretrained=True)
+        )
         if layer < len(vgg19.features):
             self.model = vgg19.features[: layer + 1]
         else:
@@ -89,7 +95,7 @@ class VGG19Core:
 
 
 class VGG19:
-    """ A pretrained VGG-19. Output will be the average of one channel across spatial
+    """A pretrained VGG-19. Output will be the average of one channel across spatial
     dimensions.
 
     Arguments:
