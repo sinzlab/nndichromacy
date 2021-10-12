@@ -14,7 +14,7 @@ from functools import partial
 from typing import Dict, Any, Callable, List
 
 import datajoint as dj
-from nnfabrik.main import Dataset
+from nnfabrik.main import Dataset, Trainer, Model, Fabrikant, Seed, my_nnfabrik
 from nnfabrik.utility.dj_helpers import CustomSchema, make_hash, cleanup_numpy_scalar
 from nnfabrik.builder import resolve_fn
 
