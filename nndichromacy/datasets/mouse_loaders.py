@@ -51,6 +51,7 @@ def static_loader(
     toy_data: bool=None,
     include_px_position=None,
     image_reshape_list=None,
+    trial_idx_selection=None,
 
 ):
     """
@@ -172,7 +173,11 @@ def static_loader(
 
     if return_test_sampler:
         dataloader = get_oracle_dataloader(
-            dat, image_condition=image_condition, file_tree=file_tree, data_key=data_key, toy_data=toy_data,
+            dat, image_condition=image_condition,
+            file_tree=file_tree,
+            data_key=data_key,
+            toy_data=toy_data,
+            trial_idx_selection=trial_idx_selection,
         )
         return dataloader
 
@@ -262,6 +267,7 @@ def static_loaders(
     toy_data: bool=None,
     include_px_position=None,
     image_reshape_list=None,
+    trial_idx_selection=None,
 ):
     """
     Returns a dictionary of dataloaders (i.e., trainloaders, valloaders, and testloaders) for >= 1 dataset(s).
@@ -300,9 +306,10 @@ def static_loaders(
             dls[key] = OrderedDict({})
     neuron_ids = [neuron_ids] if neuron_ids is None else neuron_ids
     image_ids = [image_ids] if image_ids is None else image_ids
+    trial_idx_selection = [trial_idx_selection] if trial_idx_selection is None else trial_idx_selection
 
     basepath = '/data/mouse/toliaslab/static/'
-    for path, neuron_id, image_id in zip_longest(paths, neuron_ids, image_ids, fillvalue=None):
+    for path, neuron_id, image_id, trial_idx_selection in zip_longest(paths, neuron_ids, image_ids, trial_idx_selection, fillvalue=None):
         if (overwrite_data_path) and (os.path.exists(basepath)):
             path = os.path.join(basepath, path)
 
@@ -338,6 +345,7 @@ def static_loaders(
             toy_data=toy_data,
             include_px_position=include_px_position,
             image_reshape_list=image_reshape_list,
+            trial_idx_selection=trial_idx_selection,
         )
         if not return_test_sampler:
             for k in dls:

@@ -15,9 +15,11 @@ from ..utility.measures import (get_oracles,
                                 get_mei_norm,
                                 get_mei_color_bias,
                                 get_conservative_avg_correlations,
-                                get_mei_michelson_contrast)
+                                get_mei_michelson_contrast,
+                                get_r2er)
 from .from_nnfabrik import TrainedModel, ScoringTable, SummaryScoringTable
 from .from_mei import MEISelector, TrainedEnsembleModel
+from .from_reconstruction import Reconstruction
 from . import DataCache, TrainedModelCache, EnsembleModelCache
 from nnfabrik.utility.dj_helpers import CustomSchema
 from .from_mei import MEIScore
@@ -34,6 +36,18 @@ class CorrelationToAverge(ScoringTable):
     measure_function = staticmethod(get_avg_correlations)
     measure_dataset = "test"
     measure_attribute = "avg_correlation"
+    data_cache = DataCache
+    model_cache = TrainedModelCache
+
+
+@schema
+class R2er(ScoringTable):
+    trainedmodel_table = TrainedModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_r2er)
+    measure_dataset = "test"
+    measure_attribute = "r2_er"
     data_cache = DataCache
     model_cache = TrainedModelCache
 
@@ -159,6 +173,30 @@ class TestCorrelationEnsemble(ScoringTable):
 
 
 @schema
+class ValidationCorrelationEnsemble(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_correlations)
+    measure_dataset = "validation"
+    measure_attribute = "avg_correlation"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+
+
+@schema
+class TrainCorrelationEnsemble(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_correlations)
+    measure_dataset = "train"
+    measure_attribute = "avg_correlation"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+
+
+@schema
 class TestPoissonLossEnsemble(ScoringTable):
     dataset_table = Dataset
     trainedmodel_table = TrainedEnsembleModel
@@ -176,6 +214,18 @@ class CorrelationToAvergeEnsemble(ScoringTable):
     measure_function = staticmethod(get_avg_correlations)
     measure_dataset = "test"
     measure_attribute = "avg_correlation"
+    data_cache = None
+    model_cache = None
+
+
+@schema
+class R2erEnsemble(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_r2er)
+    measure_dataset = "test"
+    measure_attribute = "r2_er"
     data_cache = None
     model_cache = None
 
@@ -368,6 +418,7 @@ class FractionOracleJackknife(SummaryScoringTable):
 @schema
 class FractionOracleJackknifeEnsemble(SummaryScoringTable):
     trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
     measure_function = staticmethod(get_fraction_oracles)
     measure_dataset = "test"
     measure_attribute = "fraction_oracle_jackknife"
@@ -446,6 +497,14 @@ class MEIColorBias(MEIScore):
 
 @schema
 class MEIMichelsonContrast(MEIScore):
+    measure_function = staticmethod(get_mei_michelson_contrast)
+    measure_attribute = "michelson_contrast"
+    external_download_path = fetch_download_path
+
+
+@schema
+class RecMichelsonContrast(MEIScore):
+    mei_table = Reconstruction
     measure_function = staticmethod(get_mei_michelson_contrast)
     measure_attribute = "michelson_contrast"
     external_download_path = fetch_download_path

@@ -14,7 +14,7 @@ from functools import partial
 from typing import Dict, Any, Callable, List
 
 import datajoint as dj
-from nnfabrik.main import Dataset
+from nnfabrik.main import Dataset, Trainer, Model, Fabrikant, Seed, my_nnfabrik
 from nnfabrik.utility.dj_helpers import CustomSchema, make_hash, cleanup_numpy_scalar
 from nnfabrik.builder import resolve_fn
 
@@ -76,6 +76,27 @@ class ReconMethod(mixins.MEIMethodMixin, dj.Lookup):
             if k in self.optional_names:
                 if "key" in v["kwargs"]:
                     v["kwargs"]["key"] = key
+
+
+
+@schema
+class ReconMethodExperiments(dj.Manual):
+    definition = """
+    experiment_name: varchar(100)                     # name of experiment
+    ---
+    -> Fabrikant.proj(experiment_fabrikant='fabrikant_name')
+    experiment_comment='': varchar(2000)              # short description 
+    experiment_ts=CURRENT_TIMESTAMP:   timestamp      # UTZ timestamp at time of insertion
+    """
+
+    class Restrictions(dj.Part):
+        definition = """
+        # This table contains the corresponding hashes to filter out models which form the respective experiment
+        -> master
+        -> ReconMethod
+        ---
+        experiment_restriction_ts=CURRENT_TIMESTAMP:   timestamp      # UTZ timestamp at time of insertion
+    """
 
 
 @schema
@@ -304,7 +325,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
             return definition
 
     def get_model_responses(
-        self, model, key, image, device="cuda", forward_kwargs=None
+        self, model, key, image, device="cuda", forward_kwargs=None, constraint=None,
     ):
         model.eval()
         model.to(device)
@@ -315,7 +336,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
                 data_key=key["data_key"],
                 **forward_kwargs,
             )
-        return responses
+        return responses if constraint is None or len(constraint) == 0 else responses[:, constraint]
 
     def get_neuronal_responses(self, dataloaders, key, method_config, return_behavior=False, return_image=False,):
         data_key = (self.target_unit_table & key).fetch1("data_key")
@@ -387,6 +408,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
         recon_type = (self.recon_type_table & key).fetch1("recon_type")
 
         if recon_type == "neurons":
+            #TODO: Make constraint based on unit IDs work (only works for model)
             responses, behavior, image = self.get_neuronal_responses(
                 dataloaders=dataloaders, key=key, return_behavior=True, method_config=method_config, return_image=True,
             )
@@ -412,11 +434,14 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
             )
             image = process_image(initial_img=initial_img, image=image)
 
+            constraint = (self.target_unit_table & key).fetch1("unit_ids")
+
             responses = self.get_model_responses(
                 model=model,
                 key=key,
                 image=image,
                 forward_kwargs=method_config.get("model_forward_kwargs", None),
+                constraint=constraint,
             )
 
         target_fn = (self.target_fn_table & key).get_target_fn(responses=responses)
@@ -435,6 +460,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
         )
 
         reconstructed_image = mei_entity["mei"]
+        #TODO: fix bug when using a constraint in the SelectorTable.
         reconstructed_responses = self.get_model_responses(
             model=model,
             key=key,

@@ -22,7 +22,8 @@ def get_oracle_dataloader(dat,
                           image_condition=None,
                           verbose=False,
                           file_tree=False,
-                          data_key=None):
+                          data_key=None,
+                          trial_idx_selection=None):
 
     if toy_data:
         condition_hashes = dat.info.condition_hash
@@ -46,15 +47,17 @@ def get_oracle_dataloader(dat,
     classes, class_idx = np.unique(image_class, return_inverse=True)
     identifiers = condition_hashes + class_idx * max_idx
     dat_tiers = dat.tiers if not file_tree else dat.trial_info.tiers
+    trial_idx = dat.trial_idx if not file_tree else dat.trial_info.trial_idx
+    test_trial_selection = (dat_tiers == 'test') if trial_idx_selection is None else ((dat_tiers == 'test') & np.isin(trial_idx, trial_idx_selection))
 
     if image_condition is None:
-        sampling_condition = np.where(dat_tiers == 'test')[0]
+        sampling_condition = np.where(test_trial_selection)[0]
     elif isinstance(image_condition, str):
         image_condition_filter = image_class == image_condition
-        sampling_condition = np.where((dat_tiers == 'test') & (image_condition_filter))[0]
+        sampling_condition = np.where((test_trial_selection) & (image_condition_filter))[0]
     elif isinstance(image_condition, list):
         image_condition_filter = sum([image_class == i for i in image_condition]).astype(np.bool)
-        sampling_condition = np.where((dat_tiers == 'test') & (image_condition_filter))[0]
+        sampling_condition = np.where((test_trial_selection) & (image_condition_filter))[0]
     else:
         raise TypeError("image_condition argument has to be a string or list of strings")
 
@@ -286,7 +289,7 @@ def add_h5_to_preprocessed_table(path, keys, comments, ignore_all_behaviors=Fals
 
     for datafile in datasets:
         if datafile.endswith('.h5'):
-            FileTreeDataset.initialize_from(datafile, ignore_all_behaviors=ignore_all_behaviors)
+            FileTreeDataset.initialize_from(datafile,)
 
     for key in (experiment.Scan() & keys).fetch('KEY'):
         if filenames is None:
