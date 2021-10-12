@@ -173,6 +173,30 @@ class TestCorrelationEnsemble(ScoringTable):
 
 
 @schema
+class ValidationCorrelationEnsemble(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_correlations)
+    measure_dataset = "validation"
+    measure_attribute = "avg_correlation"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+
+
+@schema
+class TrainCorrelationEnsemble(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_correlations)
+    measure_dataset = "train"
+    measure_attribute = "avg_correlation"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+
+
+@schema
 class TestPoissonLossEnsemble(ScoringTable):
     dataset_table = Dataset
     trainedmodel_table = TrainedEnsembleModel
