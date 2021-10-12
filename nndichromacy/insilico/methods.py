@@ -103,10 +103,12 @@ def isoresponse_gabors(
     else:
         sample_range = config_dict["locations"].get("sample_range", 15)
         start = config_dict["locations"].get(
-            "start", [optimal_location[0] - sample_range, optimal_location[1] - sample_range]
+            "start",
+            [optimal_location[0] - sample_range, optimal_location[1] - sample_range],
         )
         end = config_dict["locations"].get(
-            "end", [optimal_location[0] + sample_range, optimal_location[1] + sample_range]
+            "end",
+            [optimal_location[0] + sample_range, optimal_location[1] + sample_range],
         )
         n_stimuli = config_dict["locations"].get("n_stimuli", 100)
 

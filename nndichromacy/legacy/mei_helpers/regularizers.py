@@ -1,4 +1,11 @@
-from nndichromacy.legacy.featurevis.ops import ChangeStd, GaussianBlur, Jitter, TotalVariation, ChangeNorm, ClipRange
+from nndichromacy.legacy.featurevis.ops import (
+    ChangeStd,
+    GaussianBlur,
+    Jitter,
+    TotalVariation,
+    ChangeNorm,
+    ClipRange,
+)
 from nndichromacy.legacy.featurevis.utils import Compose
 from nndichromacy.legacy.featurevis import utils, ops
 from .utility import cumstom_initial_guess
@@ -38,9 +45,19 @@ gradient_DiCarlo = Compose([ChangeNorm(1), ClipRange(-1, 1)])
 rgb_initial_guess = partial(cumstom_initial_guess, mean=111, std=60)
 
 # walker regularizers
-walker_gradient = utils.Compose([ops.FourierSmoothing(0.04), # not exactly the same as fft_smooth(precond=0.1) but close
-                                 ops.DivideByMeanOfAbsolute(),
-                                 ops.MultiplyBy(1/850, decay_factor=(1/850 - 1/20400) /(1-1000))])  # decays from 1/850 to 1/20400 in 1000 iterations
+walker_gradient = utils.Compose(
+    [
+        ops.FourierSmoothing(
+            0.04
+        ),  # not exactly the same as fft_smooth(precond=0.1) but close
+        ops.DivideByMeanOfAbsolute(),
+        ops.MultiplyBy(1 / 850, decay_factor=(1 / 850 - 1 / 20400) / (1 - 1000)),
+    ]
+)  # decays from 1/850 to 1/20400 in 1000 iterations
 bias, scale = 111.28329467773438, 60.922306060791016
-walker_postup = utils.Compose([ops.ClipRange(-bias / scale, (255 - bias) / scale),
-                               ops.GaussianBlur(1.5, decay_factor=(1.5 - 0.01) /(1-1000))]) # decays from 1.5 to 0.01 in 1000 iterations
+walker_postup = utils.Compose(
+    [
+        ops.ClipRange(-bias / scale, (255 - bias) / scale),
+        ops.GaussianBlur(1.5, decay_factor=(1.5 - 0.01) / (1 - 1000)),
+    ]
+)  # decays from 1.5 to 0.01 in 1000 iterations

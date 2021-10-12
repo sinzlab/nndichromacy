@@ -8,7 +8,6 @@ from . import schema
 from .from_mei import MEISelector, TrainedEnsembleModel
 
 
-
 @schema
 class OptimalMouseGaborPerUnitExperiment(ExperimentPerUnitTemplate, dj.Computed):
     """MEI table template.
@@ -18,6 +17,7 @@ class OptimalMouseGaborPerUnitExperiment(ExperimentPerUnitTemplate, dj.Computed)
     the "MEIMethod" table in the Datajoint schema called "nnfabrik.main". This behavior can be changed by overwriting
     the class attribute called "method_table".
     """
+
     trained_model_table = TrainedEnsembleModel
     unit_table = MEISelector
 
@@ -30,7 +30,3 @@ class IsoResponseGabors(ExperimentPerUnitTemplate, dj.Computed):
 
     def get_stimulus_set(self, key):
         return GaborSet(**(self & key).fetch1("output")["full_gabor_config"])
-
-
-
-

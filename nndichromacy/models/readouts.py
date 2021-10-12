@@ -467,7 +467,9 @@ class MultipleFullGaussian2dBehav(MultiReadout, torch.nn.ModuleDict):
             )
         self.gamma_readout = gamma_readout
         self.gamma_modulator = gamma_modulator if gamma_modulator is not None else 0
-        self.gamma_dissimilarity = gamma_dissimilarity if gamma_dissimilarity is not None else 0
+        self.gamma_dissimilarity = (
+            gamma_dissimilarity if gamma_dissimilarity is not None else 0
+        )
 
     def regularizer(self, data_key):
         return (

@@ -1,5 +1,6 @@
 import torch
 
+
 def unpack_data_info(data_info):
 
     in_shapes_dict = {k: v["input_dimensions"] for k, v in data_info.items()}

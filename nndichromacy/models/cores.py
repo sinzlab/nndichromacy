@@ -22,9 +22,20 @@ class TransferLearningCore(Core2d, nn.Module):
     """
     A Class to create a Core based on a model class from torchvision.models.
     """
-    def __init__(self, input_channels, tr_model_fn, model_layer, pretrained=True,
-                 final_batchnorm=True, final_nonlinearity=True,
-                 bias=False, momentum=0.1, fine_tune = False, **kwargs):
+
+    def __init__(
+        self,
+        input_channels,
+        tr_model_fn,
+        model_layer,
+        pretrained=True,
+        final_batchnorm=True,
+        final_nonlinearity=True,
+        bias=False,
+        momentum=0.1,
+        fine_tune=False,
+        **kwargs
+    ):
         """
         Args:
             input_channels: number of input channgels
@@ -38,38 +49,44 @@ class TransferLearningCore(Core2d, nn.Module):
             fine_tune: boolean, sets all weights to trainable if True
             **kwargs:
         """
-        print('Ignoring input {} when creating {}'.format(repr(kwargs), self.__class__.__name__))
+        print(
+            "Ignoring input {} when creating {}".format(
+                repr(kwargs), self.__class__.__name__
+            )
+        )
         super().__init__()
 
-        #getattr(self, tr_model_fn)
-        tr_model_fn         = globals()[tr_model_fn]
+        # getattr(self, tr_model_fn)
+        tr_model_fn = globals()[tr_model_fn]
 
         self.input_channels = input_channels
-        self.tr_model_fn    = tr_model_fn
+        self.tr_model_fn = tr_model_fn
 
-        tr_model            = tr_model_fn(pretrained=pretrained)
-        self.model_layer    = model_layer
+        tr_model = tr_model_fn(pretrained=pretrained)
+        self.model_layer = model_layer
         self.features = nn.Sequential()
 
         tr_features = nn.Sequential(*list(tr_model.features.children())[:model_layer])
-        
+
         # Remove the bias of the last conv layer if not :bias:
         if not bias:
-            if 'bias' in tr_features[-1]._parameters:
+            if "bias" in tr_features[-1]._parameters:
                 zeros = torch.zeros_like(tr_features[-1].bias)
                 tr_features[-1].bias.data = zeros
-        
+
         # Fix pretrained parameters during training parameters
         if not fine_tune:
             for param in tr_features.parameters():
                 param.requires_grad = False
 
-        self.features.add_module('TransferLearning', tr_features)
+        self.features.add_module("TransferLearning", tr_features)
         print(self.features)
         if final_batchnorm:
-            self.features.add_module('OutBatchNorm', nn.BatchNorm2d(self.outchannels, momentum=momentum))
+            self.features.add_module(
+                "OutBatchNorm", nn.BatchNorm2d(self.outchannels, momentum=momentum)
+            )
         if final_nonlinearity:
-            self.features.add_module('OutNonlin', nn.ReLU(inplace=True))
+            self.features.add_module("OutNonlin", nn.ReLU(inplace=True))
 
     def forward(self, x):
         if self.input_channels == 1:
@@ -85,40 +102,40 @@ class TransferLearningCore(Core2d, nn.Module):
         Returns: dimensions of the output, after a forward pass through the model
         """
         found_out_channels = False
-        i=1
+        i = 1
         while not found_out_channels:
-            if 'out_channels' in self.features.TransferLearning[-i].__dict__:
+            if "out_channels" in self.features.TransferLearning[-i].__dict__:
                 found_out_channels = True
             else:
-                i = i+1
+                i = i + 1
         return self.features.TransferLearning[-i].out_channels
 
 
 class SE2dCore(Core2d, nn.Module):
     def __init__(
-            self,
-            input_channels,
-            hidden_channels,
-            input_kern,
-            hidden_kern,
-            layers=3,
-            gamma_input=0.0,
-            skip=0,
-            final_nonlinearity=True,
-            bias=False,
-            momentum=0.1,
-            pad_input=True,
-            batch_norm=True,
-            hidden_dilation=0,
-            laplace_padding=None,
-            input_regularizer="LaplaceL2norm",
-            stack=None,
-            se_reduction=32,
-            n_se_blocks=1,
-            depth_separable=False,
-            attention_conv=False,
-            linear=False,
-            hidden_padding=None,
+        self,
+        input_channels,
+        hidden_channels,
+        input_kern,
+        hidden_kern,
+        layers=3,
+        gamma_input=0.0,
+        skip=0,
+        final_nonlinearity=True,
+        bias=False,
+        momentum=0.1,
+        pad_input=True,
+        batch_norm=True,
+        hidden_dilation=0,
+        laplace_padding=None,
+        input_regularizer="LaplaceL2norm",
+        stack=None,
+        se_reduction=32,
+        n_se_blocks=1,
+        depth_separable=False,
+        attention_conv=False,
+        linear=False,
+        hidden_padding=None,
     ):
         """
         Args:
@@ -152,14 +169,18 @@ class SE2dCore(Core2d, nn.Module):
         super().__init__()
 
         assert not bias or not batch_norm, "bias and batch_norm should not both be true"
-        assert not depth_separable or not attention_conv, "depth_separable and attention_conv should not both be true"
+        assert (
+            not depth_separable or not attention_conv
+        ), "depth_separable and attention_conv should not both be true"
 
         regularizer_config = (
             dict(padding=laplace_padding, kernel=input_kern)
             if input_regularizer == "GaussianLaplaceL2"
             else dict(padding=laplace_padding)
         )
-        self._input_weights_regularizer = regularizers.__dict__[input_regularizer](**regularizer_config)
+        self._input_weights_regularizer = regularizers.__dict__[input_regularizer](
+            **regularizer_config
+        )
 
         self.layers = layers
         self.gamma_input = gamma_input
@@ -171,12 +192,18 @@ class SE2dCore(Core2d, nn.Module):
         if stack is None:
             self.stack = range(self.layers)
         else:
-            self.stack = [*range(self.layers)[stack:]] if isinstance(stack, int) else stack
+            self.stack = (
+                [*range(self.layers)[stack:]] if isinstance(stack, int) else stack
+            )
 
         # --- first layer
         layer = OrderedDict()
         layer["conv"] = nn.Conv2d(
-            input_channels, hidden_channels, input_kern, padding=input_kern // 2 if pad_input else 0, bias=bias
+            input_channels,
+            hidden_channels,
+            input_kern,
+            padding=input_kern // 2 if pad_input else 0,
+            bias=bias,
         )
         if batch_norm:
             layer["norm"] = nn.BatchNorm2d(hidden_channels, momentum=momentum)
@@ -190,12 +217,21 @@ class SE2dCore(Core2d, nn.Module):
         # --- other layers
         for l in range(1, self.layers):
             layer = OrderedDict()
-            hidden_padding = hidden_padding if hidden_padding is not None else ((hidden_kern[l - 1] - 1) * hidden_dilation + 1) // 2
+            hidden_padding = (
+                hidden_padding
+                if hidden_padding is not None
+                else ((hidden_kern[l - 1] - 1) * hidden_dilation + 1) // 2
+            )
             if depth_separable:
-                layer["ds_conv"] = DepthSeparableConv2d(hidden_channels, hidden_channels,
-                                                        kernel_size=hidden_kern[l - 1],
-                                                        dilation=hidden_dilation, padding=hidden_padding, bias=False,
-                                                        stride=1)
+                layer["ds_conv"] = DepthSeparableConv2d(
+                    hidden_channels,
+                    hidden_channels,
+                    kernel_size=hidden_kern[l - 1],
+                    dilation=hidden_dilation,
+                    padding=hidden_padding,
+                    bias=False,
+                    stride=1,
+                )
             elif attention_conv:
                 layer["conv"] = AttentionConv(
                     hidden_channels if not skip > 1 else min(skip, l) * hidden_channels,
@@ -220,7 +256,9 @@ class SE2dCore(Core2d, nn.Module):
                 layer["nonlin"] = nn.ELU(inplace=True)
 
             if (self.layers - l) <= self.n_se_blocks:
-                layer["seg_ex_block"] = SQ_EX_Block(in_ch=hidden_channels, reduction=se_reduction)
+                layer["seg_ex_block"] = SQ_EX_Block(
+                    in_ch=hidden_channels, reduction=se_reduction
+                )
 
             self.features.add_module("layer{}".format(l), nn.Sequential(layer))
 
@@ -230,7 +268,9 @@ class SE2dCore(Core2d, nn.Module):
         ret = []
         for l, feat in enumerate(self.features):
             do_skip = l >= 1 and self.skip > 1
-            input_ = feat(input_ if not do_skip else torch.cat(ret[-min(self.skip, l):], dim=1))
+            input_ = feat(
+                input_ if not do_skip else torch.cat(ret[-min(self.skip, l) :], dim=1)
+            )
             if l in self.stack:
                 ret.append(input_)
         return torch.cat(ret, dim=1)
@@ -247,11 +287,13 @@ class SE2dCore(Core2d, nn.Module):
 
 
 class RotationEquivariantCore(nn.Module):
-    def __init__(self,
-                 num_rotations=8,
-                 upsampling=2,
-                 filter_size=[13, 5, 5],
-                 num_filters=[8, 16, 32]):
+    def __init__(
+        self,
+        num_rotations=8,
+        upsampling=2,
+        filter_size=[13, 5, 5],
+        num_filters=[8, 16, 32],
+    ):
 
         super(RotationEquivariantCore, self).__init__()
         self.filter_size = filter_size
@@ -270,7 +312,7 @@ class RotationEquivariantCore(nn.Module):
                 num_rotations=num_rotations,
                 upsampling=upsampling,
                 first_layer=(not i),
-                layer_id=i
+                layer_id=i,
             )
             layers.append(layer)
 

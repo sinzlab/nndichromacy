@@ -47,7 +47,12 @@ def concave_hull_pca_selector(
 
     dat = dataloaders["train"][data_key].dataset
     if "probe" in dat.trial_info.tiers:
-        responses = np.array([dat[i].responses.cpu().numpy() for i in np.where(dat.trial_info.tiers=="probe")[0]])
+        responses = np.array(
+            [
+                dat[i].responses.cpu().numpy()
+                for i in np.where(dat.trial_info.tiers == "probe")[0]
+            ]
+        )
     else:
         responses = []
         for b in dataloaders["train"][data_key]:
