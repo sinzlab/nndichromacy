@@ -256,7 +256,8 @@ def se_core_full_gauss_readout(
     se_reduction=32,
     n_se_blocks=1,
     depth_separable=False,
-    linear=False,
+    linear=False, 
+    final_nonlinear_for_linear=None,
     gauss_type="full",
     grid_mean_predictor=None,
     share_features=False,
@@ -312,7 +313,8 @@ def se_core_full_gauss_readout(
         n_neurons_dict = {k: v[out_name][1] for k, v in session_shape_dict.items()}
         in_shapes_dict = {k: v[in_name] for k, v in session_shape_dict.items()}
         input_channels = [v[in_name][1] for v in session_shape_dict.values()]
-
+    ###
+    #print(n_neurons_dict)
     core_input_channels = (
         list(input_channels.values())[0]
         if isinstance(input_channels, dict)
@@ -414,7 +416,9 @@ def se_core_full_gauss_readout(
             _, targets = next(iter(value))[:2]
             readout[key].bias.data = targets.mean(0)
 
-    model = Encoder(core=core, readout=readout, elu_offset=elu_offset, shifter=shifter, linear=linear)
+    model = Encoder(core=core, readout=readout, elu_offset=elu_offset, shifter=shifter, 
+                    linear=linear,final_nonlinear_for_linear=final_nonlinear_for_linear,
+                    n_neurons_dict=n_neurons_dict)
 
     return model
 

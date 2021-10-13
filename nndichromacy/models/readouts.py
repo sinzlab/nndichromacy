@@ -199,6 +199,7 @@ class MultipleFullGaussian2d(MultiReadout, torch.nn.ModuleDict):
                     source_grid=source_grid,
                 ),
             )
+            
         self.gamma_readout = gamma_readout
 
 

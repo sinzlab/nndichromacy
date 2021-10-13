@@ -8,7 +8,9 @@ from collections.abc import Iterable
 
 from mei.legacy.utils import varargin
 from ..tables.scores import MEINorm, MEINormBlue, MEINormGreen
-
+from nndichromacy.tables.from_mei import MEI
+import os
+fetch_download_path = os.environ.get('FETCH_DOWNLOAD_PATH', '/data/fetched_from_attach')
 
 class BlurAndCut:
     """ Blur an image with a Gaussian window.
@@ -173,15 +175,151 @@ class ClipNormInChannel:
             x[:, self.channel, ...] = torch.clamp(x[:, self.channel, ...], self.x_min, self.x_max)
             return x
 
-class ClipNormInAllChannel: ## when need add transparency to visualization
-    """ Change the norm of the input for different channel separately (i.e. color channel & transparent channel)
+class ClipNormInChannelforRingFlexNorm:
+    """ Change the norm of the input.
 
     Arguments:
         norm (float or tensor): Desired norm. If tensor, it should be the same length as
             x.
     """
 
-    def __init__(self, channel1,channel2, norm_ch1,norm_ch2=None, x_min_ch1=None, x_max_ch1=None,
+    def __init__(self, channel, fullnorm, key, mask_thres_for_ring=0.3, x_min=None, x_max=None):
+        self.channel = channel
+        self.fullnorm = fullnorm
+        self.x_min = x_min
+        self.x_max = x_max
+
+        src_method_fn = key["src_method_fn"]
+        inner_ensemble_hash = key["inner_ensemble_hash"]
+        outer_ensemble_hash = key["outer_ensemble_hash"]
+        inner_method_hash = key["inner_method_hash"]
+        outer_method_hash = key["outer_method_hash"]
+        unit_id = key["unit_id"]
+
+        outer_mei_path = (MEI & dict(method_fn=src_method_fn) & dict(ensemble_hash=outer_ensemble_hash) & dict(method_hash=outer_method_hash) & dict(unit_id=unit_id)).fetch1('mei', download_path=fetch_download_path)
+        inner_mei_path = (MEI & dict(method_fn=src_method_fn) & dict(ensemble_hash=inner_ensemble_hash) & dict(method_hash=inner_method_hash) & dict(unit_id=unit_id)).fetch1('mei', download_path=fetch_download_path)
+        
+        outer_mei=torch.load(outer_mei_path)
+        inner_mei=torch.load(inner_mei_path)
+
+        self.ring_mask=(outer_mei[0][1] - inner_mei[0][1] > mask_thres_for_ring) * 1
+
+    @varargin
+    def __call__(self, x, iteration=None):
+        inner = x[:, self.channel, ...] * (1 - self.ring_mask.to(x.device))
+        inner_norm = torch.norm(inner)
+
+        ring = x[:, self.channel, ...] * self.ring_mask.to(x.device)
+        ring_norm = torch.norm(ring) 
+        
+        new_ring = ring * ( torch.sqrt(self.fullnorm**2-inner_norm**2) /ring_norm )
+        x[:, self.channel, ...] = new_ring + inner
+        #print(self.ring_mask)
+        print(torch.norm(new_ring).item(),' + ',torch.norm(inner) ,' == ',torch.norm(new_ring+inner))
+        if self.x_min is None:
+            return x
+        else:
+           x[:, self.channel, ...] = torch.clamp(x[:, self.channel, ...], self.x_min, self.x_max)
+        return x
+
+class ClipNormInChannelforRing:
+    """ Change the norm of the input.
+
+    Arguments:
+        norm (float or tensor): Desired norm. If tensor, it should be the same length as
+            x.
+    """
+
+    def __init__(self, channel, norm, key, mask_thres_for_ring=0.3, x_min=None, x_max=None):
+        self.channel = channel
+        self.norm = norm
+        self.x_min = x_min
+        self.x_max = x_max
+
+        src_method_fn = key["src_method_fn"]
+        inner_ensemble_hash = key["inner_ensemble_hash"]
+        outer_ensemble_hash = key["outer_ensemble_hash"]
+        inner_method_hash = key["inner_method_hash"]
+        outer_method_hash = key["outer_method_hash"]
+        unit_id = key["unit_id"]
+
+        outer_mei_path = (MEI & dict(method_fn=src_method_fn) & dict(ensemble_hash=outer_ensemble_hash) & dict(method_hash=outer_method_hash) & dict(unit_id=unit_id)).fetch1('mei', download_path=fetch_download_path)
+        inner_mei_path = (MEI & dict(method_fn=src_method_fn) & dict(ensemble_hash=inner_ensemble_hash) & dict(method_hash=inner_method_hash) & dict(unit_id=unit_id)).fetch1('mei', download_path=fetch_download_path)
+        
+        outer_mei=torch.load(outer_mei_path)
+        inner_mei=torch.load(inner_mei_path)
+
+        self.ring_mask=(outer_mei[0][1] - inner_mei[0][1] > mask_thres_for_ring) * 1
+
+    @varargin
+    def __call__(self, x, iteration=None):
+
+        x_norm = torch.norm(x[:, self.channel, ...] * self.ring_mask.to(x.device)) 
+        if x_norm > self.norm:
+            x[:, self.channel, ...] = x[:, self.channel, ...] * self.ring_mask.to(x.device) * (self.norm / x_norm)  + x[:, self.channel, ...] * (1 - self.ring_mask.to(x.device))
+        if self.x_min is None:
+            return x
+        else:
+            x[:, self.channel, ...] = torch.clamp(x[:, self.channel, ...], self.x_min, self.x_max)
+            return x
+
+class ClipNormInChannelforSurround:
+    """ Change the norm of the input.
+
+    Arguments:
+        norm (float or tensor): Desired norm. If tensor, it should be the same length as
+            x.
+    """
+
+    def __init__(self, channel1, key, mask_thres=0.3,norm_ch1=None, channel2=None,norm_ch2=None, x_min_ch1=None, x_max_ch1=None, x_min_ch2=None, x_max_ch2=None):
+
+        self.channel1 = channel1
+        self.norm_ch1 = norm_ch1
+        self.x_min_ch1 = x_min_ch1
+        self.x_max_ch1 = x_max_ch1
+        
+        self.channel2 = channel2
+        if self.channel2 is not None:
+            self.norm_ch2 = norm_ch2
+            self.x_min_ch2 = x_min_ch2
+            self.x_max_ch2 = x_max_ch2
+
+        src_method_fn = key["src_method_fn"]
+        inner_ensemble_hash = key["inner_ensemble_hash"]
+        inner_method_hash = key["inner_method_hash"]
+        unit_id = key["unit_id"]
+
+        inner_mei_path = (MEI & dict(method_fn=src_method_fn) & dict(ensemble_hash=inner_ensemble_hash) & dict(method_hash=inner_method_hash) & dict(unit_id=unit_id)).fetch1('mei', download_path=fetch_download_path)
+        
+        inner_mei=torch.load(inner_mei_path)
+
+        self.center_mask=(inner_mei[0][1] > mask_thres) * 1
+
+    @varargin
+    def __call__(self, x, iteration=None):
+
+        x_norm_ch1 = torch.norm(x[:, self.channel1, ...] * (1-self.center_mask).to(x.device)) 
+        if self.norm_ch1 is not None:
+            if x_norm_ch1 > self.norm_ch1:
+                x[:, self.channel1, ...] = x[:, self.channel1, ...] * (1-self.center_mask).to(x.device) * (self.norm_ch1 / x_norm_ch1)  + x[:, self.channel1, ...] * self.center_mask.to(x.device)
+        if self.x_min_ch1 or self.x_max_ch1 is not None:
+            x[:, self.channel1, ...] = torch.clamp(x[:, self.channel1, ...], self.x_min_ch1, self.x_max_ch1)
+
+        # when there is transparent channel
+        if self.channel2 is not None:
+            x[:, self.channel2, ...] = torch.clamp(x[:, self.channel2, ...], self.x_min_ch2, self.x_max_ch2)
+        return x
+
+
+class ClipNormInAllChannel: 
+    """ When need add transparency to visualization, change the norm of the input for different channel separately (i.e. color channel & transparent channel)
+
+    Arguments:
+        norm (float or tensor): Desired norm. If tensor, it should be the same length as
+            x.
+    """
+
+    def __init__(self, channel1, norm_ch1,channel2=None,norm_ch2=None, x_min_ch1=None, x_max_ch1=None,
                          x_min_ch2=None, x_max_ch2=None):
         self.channel1 = channel1
         self.norm_ch1 = norm_ch1
@@ -189,22 +327,29 @@ class ClipNormInAllChannel: ## when need add transparency to visualization
         self.x_max_ch1 = x_max_ch1
         
         self.channel2 = channel2
-        self.norm_ch2 = norm_ch2
-        self.x_min_ch2 = x_min_ch2
-        self.x_max_ch2 = x_max_ch2
+        if self.channel2 is not None:
+            self.norm_ch2 = norm_ch2
+            self.x_min_ch2 = x_min_ch2
+            self.x_max_ch2 = x_max_ch2
 
     @varargin
     def __call__(self, x, iteration=None):
         x_norm_ch1 = torch.norm(x[:, self.channel1, ...])
         x_norm_ch2 = torch.norm(x[:, self.channel2, ...])
+
         if x_norm_ch1 > self.norm_ch1:
             x[:, self.channel1, ...] = x[:, self.channel1, ...] * (self.norm_ch1 / x_norm_ch1)
-        #if x_norm_ch2 > self.norm_ch2:
-        #    x[:, self.channel2, ...] = x[:, self.channel2, ...] * (self.norm_ch2 / x_norm_ch2)
-        #print("before clamp, alpha channel",torch.norm(x[:, self.channel2, ...]))
-        x[:, self.channel1, ...] = torch.clamp(x[:, self.channel1, ...], self.x_min_ch1, self.x_max_ch1)
-        x[:, self.channel2, ...] = torch.clamp(x[:, self.channel2, ...], self.x_min_ch2, self.x_max_ch2)
-        #print("after clamp, alpha channel",torch.norm(x[:, self.channel2, ...]).item())
+
+        if self.x_min_ch1 or self.x_max_ch1 is not None:
+            x[:, self.channel1, ...] = torch.clamp(x[:, self.channel1, ...], self.x_min_ch1, self.x_max_ch1)
+
+        # when there is transparent channel
+        if self.channel2 is not None:
+            if self.norm_ch2 is not None:
+                if x_norm_ch2 > self.norm_ch2:
+                    x[:, self.channel2, ...] = x[:, self.channel2, ...] * (self.norm_ch2 / x_norm_ch2)
+
+            x[:, self.channel2, ...] = torch.clamp(x[:, self.channel2, ...], self.x_min_ch2, self.x_max_ch2)
         return x
 
 class ChangeNormShuffleBehavior:
