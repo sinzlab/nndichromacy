@@ -1,5 +1,6 @@
 import inspect
 
+
 def get_default_args(func):
     signature = inspect.signature(func)
     return {

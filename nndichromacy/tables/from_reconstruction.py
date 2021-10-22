@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import Dict, Any
 
+import numpy as np
 import torch
 from torch.nn import Module
 from torch.utils.data import DataLoader
@@ -13,7 +14,7 @@ from functools import partial
 from typing import Dict, Any, Callable, List
 
 import datajoint as dj
-from nnfabrik.main import Dataset
+from nnfabrik.main import Dataset, Trainer, Model, Fabrikant, Seed, my_nnfabrik
 from nnfabrik.utility.dj_helpers import CustomSchema, make_hash, cleanup_numpy_scalar
 from nnfabrik.builder import resolve_fn
 
@@ -22,10 +23,10 @@ from mei.modules import ConstrainedOutputModel
 from nndichromacy.tables import TrainedEnsembleModel
 from nndichromacy.tables.from_mei import schema, Dataloaders, Key, resolve_target_fn
 from .utils import (
-    extend_img_with_behavior,
     get_image_data_from_dataset,
     preprocess_img_for_reconstruction,
-    get_behavior_from_method_config,
+    get_initial_image,
+    process_image,
 )
 from mei import mixins
 from .from_mei import MEISeed
@@ -47,6 +48,30 @@ class ReconMethod(mixins.MEIMethodMixin, dj.Lookup):
 
     def generate_mei(self, dataloaders: Dataloaders, model: Module, key: Key, seed: int) -> Dict[str, Any]:
         method_fn, method_config = (self & key).fetch1("method_fn", "method_config")
+        if "image_repeat" in method_config:
+            print("... updating method config ...")
+            dataloaders = (
+                Reconstruction().trained_model_table.dataset_table() & key
+            ).get_dataloader()
+
+            responses, behavior, image = Reconstruction().get_neuronal_responses(
+                dataloaders=dataloaders,
+                key=key,
+                return_behavior=True,
+                method_config=method_config,
+                return_image=True,
+            )
+            behavior_list = [*behavior[0].cpu().numpy().squeeze()]
+            eye_pos = [*behavior[1].cpu().numpy().squeeze()]
+
+            method_config["initial"]["kwargs"]["selected_values"] = behavior_list
+            if "model_forward_kwargs" not in method_config:
+                method_config["model_forward_kwargs"] = {}
+
+            method_config["model_forward_kwargs"]["eye_pos"] = np.array([eye_pos])
+            method_config["model_forward_kwargs"]["behavior"] = np.array(
+                [behavior_list]
+            )
         self.insert_key_in_ops(method_config=method_config, key=key)
         method_fn = self.import_func(method_fn)
         mei, score, output = method_fn(dataloaders, model, method_config, seed)
@@ -57,6 +82,26 @@ class ReconMethod(mixins.MEIMethodMixin, dj.Lookup):
             if k in self.optional_names:
                 if "key" in v["kwargs"]:
                     v["kwargs"]["key"] = key
+
+
+@schema
+class ReconMethodExperiments(dj.Manual):
+    definition = """
+    experiment_name: varchar(100)                     # name of experiment
+    ---
+    -> Fabrikant.proj(experiment_fabrikant='fabrikant_name')
+    experiment_comment='': varchar(2000)              # short description 
+    experiment_ts=CURRENT_TIMESTAMP:   timestamp      # UTZ timestamp at time of insertion
+    """
+
+    class Restrictions(dj.Part):
+        definition = """
+        # This table contains the corresponding hashes to filter out models which form the respective experiment
+        -> master
+        -> ReconMethod
+        ---
+        experiment_restriction_ts=CURRENT_TIMESTAMP:   timestamp      # UTZ timestamp at time of insertion
+    """
 
 
 @schema
@@ -276,29 +321,77 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
             )
             return definition
 
-    def get_model_responses(self, model, key, image, behavior=None, device="cuda", **kwargs):
+    def get_model_responses(
+        self,
+        model,
+        key,
+        image,
+        device="cuda",
+        forward_kwargs=None,
+        constraint=None,
+    ):
         model.eval()
         model.to(device)
-        if behavior is not None:
-            image = extend_img_with_behavior(image, behavior)
+        forward_kwargs = dict() if forward_kwargs is None else forward_kwargs
         with torch.no_grad():
             responses = model(
                 image.to(device),
                 data_key=key["data_key"],
-                **kwargs,
+                **forward_kwargs,
             )
-        return responses
+        return (
+            responses
+            if constraint is None or len(constraint) == 0
+            else responses[:, constraint]
+        )
 
-    # TODO: Add functionality when selecting a
-    def get_neuronal_responses(self, dataloaders, key, return_behavior=False):
+    def get_neuronal_responses(
+        self,
+        dataloaders,
+        key,
+        method_config,
+        return_behavior=False,
+        return_image=False,
+    ):
         data_key = (self.target_unit_table & key).fetch1("data_key")
         dat = dataloaders["train"][data_key].dataset
-        image_class, image_id = (self.base_image_table & key).fetch1("image_class", "image_id")
+        image_class, image_id = (self.base_image_table & key).fetch1(
+            "image_class", "image_id"
+        )
+        image_repeat = method_config.get("image_repeat", None)
         if return_behavior:
-            behavior_keys = get_image_data_from_dataset(dat, image_class, image_id, return_behavior=True)
-        else:
-            responses = get_image_data_from_dataset(dat, image_class, image_id, return_behavior=False)
-        return responses if return_behavior is False else behavior_keys
+            behavior_keys = get_image_data_from_dataset(
+                dat,
+                image_class,
+                image_id,
+                return_behavior=True,
+                image_repeat=image_repeat,
+            )
+
+        if return_image:
+            image = get_image_data_from_dataset(
+                dat,
+                image_class,
+                image_id,
+                return_behavior=False,
+                image_repeat=image_repeat,
+                return_image=return_image,
+            )
+
+        responses = get_image_data_from_dataset(
+            dat,
+            image_class,
+            image_id,
+            return_behavior=False,
+            image_repeat=image_repeat,
+        )
+
+        ret = [responses]
+        if return_behavior:
+            ret.append(behavior_keys)
+        if return_image:
+            ret.append(image)
+        return ret
 
     def get_real_behavior(self, key):
         return self.get_neuronal_responses(key, return_behavior=True)
@@ -318,8 +411,12 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
         dataset_config = (self.trained_model_table.dataset_table & key).fetch1("dataset_config")
         mean, std = [dataset_config.get(i, None) for i in ["inputs_mean", "inputs_std"]]
         if mean is None:
-            mean = dataloaders["train"][key["data_key"]].dataset.statistics.images.all.mean
-            std = dataloaders["train"][key["data_key"]].dataset.statistics.images.all.std
+            mean = dataloaders["train"][
+                key["data_key"]
+            ].dataset.statistics.images.all.mean
+            std = dataloaders["train"][
+                key["data_key"]
+            ].dataset.statistics.images.all.std
         return mean, std
 
     def _insert_responses(self, response_entity: Dict[str, Any]) -> None:
@@ -332,21 +429,51 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
     def make(self, key):
         dataloaders, model = self.model_loader.load(key=key)
         seed = (self.seed_table() & key).fetch1("mei_seed")
+        method_config = (self.method_table & key).fetch1("method_config")
         recon_type = (self.recon_type_table & key).fetch1("recon_type")
-        img_mean, img_std = self.get_dataset_statistics(key, dataloaders)
-        image = self.get_original_image(key, img_statistics=(img_mean, img_std), dataloaders=dataloaders)
-        behavior, kwargs = get_behavior_from_method_config((self.method_table & key).fetch1("method_config"))
-        responses = (
-            self.get_neuronal_responses(dataloaders=dataloaders, key=key)
-            if recon_type == "neurons"
-            else self.get_model_responses(
+
+        if recon_type == "neurons":
+            # TODO: Make constraint based on unit IDs work (only works for model)
+            responses, behavior, image = self.get_neuronal_responses(
+                dataloaders=dataloaders,
+                key=key,
+                return_behavior=True,
+                method_config=method_config,
+                return_image=True,
+            )
+            behavior_list = [*behavior[0].cpu().numpy().squeeze()]
+            eye_pos = [*behavior[1].cpu().numpy().squeeze()]
+
+            method_config["initial"]["kwargs"]["selected_values"] = behavior_list
+            if "model_forward_kwargs" not in method_config:
+                method_config["model_forward_kwargs"] = {}
+
+            method_config["model_forward_kwargs"]["eye_pos"] = np.array([eye_pos])
+            method_config["model_forward_kwargs"]["behavior"] = np.array(
+                [behavior_list]
+            )
+
+        else:
+            img_mean, img_std = self.get_dataset_statistics(key, dataloaders)
+            image = self.get_original_image(
+                key, img_statistics=(img_mean, img_std), dataloaders=dataloaders
+            )
+            initial_img = get_initial_image(
+                dataloaders=dataloaders,
+                method_config=method_config,
+                data_key=key["data_key"],
+            )
+            image = process_image(initial_img=initial_img, image=image)
+
+            constraint = (self.target_unit_table & key).fetch1("unit_ids")
+
+            responses = self.get_model_responses(
                 model=model,
                 key=key,
                 image=image,
-                behavior=behavior,
-                **kwargs,
+                forward_kwargs=method_config.get("model_forward_kwargs", None),
+                constraint=constraint,
             )
-        )
 
         target_fn = (self.target_fn_table & key).get_target_fn(responses=responses)
         unit_ids, data_key = (self.target_unit_table & key).fetch1("unit_ids", "data_key")
@@ -360,8 +487,12 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
         mei_entity = self.method_table().generate_mei(dataloaders, output_selected_model, key, seed)
 
         reconstructed_image = mei_entity["mei"]
+        # TODO: fix bug when using a constraint in the SelectorTable.
         reconstructed_responses = self.get_model_responses(
-            model=model, key=key, image=reconstructed_image, behavior=None, **kwargs
+            model=model,
+            key=key,
+            image=reconstructed_image,
+            forward_kwargs=method_config.get("model_forward_kwargs", None),
         )
         response_entity = dict(
             original_responses=responses,

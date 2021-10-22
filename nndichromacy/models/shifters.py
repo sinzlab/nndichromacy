@@ -4,15 +4,14 @@ import torch
 from torch.nn import ModuleDict
 
 
-
 class Shifter:
     def __repr__(self):
         s = super().__repr__()
-        s += ' [{} regularizers: '.format(self.__class__.__name__)
+        s += " [{} regularizers: ".format(self.__class__.__name__)
         ret = []
-        for attr in filter(lambda x: 'gamma' in x, dir(self)):
-            ret.append('{} = {}'.format(attr, getattr(self, attr)))
-        return s + '|'.join(ret) + ']\n'
+        for attr in filter(lambda x: "gamma" in x, dir(self)):
+            ret.append("{} = {}".format(attr, getattr(self, attr)))
+        return s + "|".join(ret) + "]\n"
 
 
 class MLP(nn.Module):
@@ -43,15 +42,28 @@ class MLP(nn.Module):
 
 
 class MLPShifter(Shifter, ModuleDict):
-    def __init__(self, data_keys, input_channels=2, hidden_channels_shifter=2,
-                 shift_layers=1, gamma_shifter=0, **kwargs):
+    def __init__(
+        self,
+        data_keys,
+        input_channels=2,
+        hidden_channels_shifter=2,
+        shift_layers=1,
+        gamma_shifter=0,
+        **kwargs
+    ):
         super().__init__()
         self.gamma_shifter = gamma_shifter
         for k in data_keys:
-            self.add_module(k, MLP(input_channels, hidden_channels_shifter, shift_layers))
+            self.add_module(
+                k, MLP(input_channels, hidden_channels_shifter, shift_layers)
+            )
 
     def initialize(self, **kwargs):
-        log.info('Ignoring input {} when initializing {}'.format(repr(kwargs), self.__class__.__name__))
+        log.info(
+            "Ignoring input {} when initializing {}".format(
+                repr(kwargs), self.__class__.__name__
+            )
+        )
         for linear_layer in [p for p in self.parameters() if isinstance(p, nn.Linear)]:
             xavier_normal(linear_layer.weight)
 
@@ -89,11 +101,10 @@ class StaticAffine2d(nn.Linear):
         self.weight.data.normal_(0, 1e-6)
         if self.bias is not None:
             if bias is not None:
-                log.info('Setting bias to predefined value')
+                log.info("Setting bias to predefined value")
                 self.bias.data = bias
             else:
                 self.bias.data.normal_(0, 1e-6)
-
 
 
 def NoShifter(*args, **kwargs):

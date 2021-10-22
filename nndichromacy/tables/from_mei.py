@@ -79,7 +79,9 @@ class MEISelector(MouseSelectorTemplate):
 @schema
 class MEIMethod(mixins.MEIMethodMixin, dj.Lookup):
     seed_table = MEISeed
-    optional_names = optional_names = (
+    optional_names = (
+        "initial",
+        "optimizer",
         "transform",
         "regularization",
         "precondition",
@@ -174,5 +176,3 @@ class MEIScore(dj.Computed):
         score = self.measure_function(mei, **self.function_kwargs)
         key[self.measure_attribute] = score
         self.insert1(key, ignore_extra_fields=True)
-
-

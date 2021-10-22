@@ -3,14 +3,16 @@ import torch
 from torch import nn, optim
 
 
-def compute_RFs(model,
-                dataloaders,
-                data_key,
-                selected_channels=None,
-                init_img=None,
-                neuron_positions=None,
-                lr=1,
-                model_forward_kwargs=None):
+def compute_RFs(
+    model,
+    dataloaders,
+    data_key,
+    selected_channels=None,
+    init_img=None,
+    neuron_positions=None,
+    lr=1,
+    model_forward_kwargs=None,
+):
     """
     Computes the gradient receptive fields of the neurons through gradients.
 
@@ -29,13 +31,11 @@ def compute_RFs(model,
         np.ndarray: gradient receptive fields computed for specified neurons
     """
 
-    sample_input = next(iter(dataloaders['train'][data_key]))[0]
+    sample_input = next(iter(dataloaders["train"][data_key]))[0]
     _, c, h, w = sample_input.shape
     device = sample_input.device
     selected_channels = (
-        selected_channels
-        if selected_channels is not None
-        else np.arange(c)
+        selected_channels if selected_channels is not None else np.arange(c)
     )
 
     init_img = (
@@ -45,18 +45,14 @@ def compute_RFs(model,
     )
 
     model_forward_kwargs = (
-        model_forward_kwargs
-        if model_forward_kwargs is not None
-        else dict()
+        model_forward_kwargs if model_forward_kwargs is not None else dict()
     )
 
     optimizer = optim.Adam([init_img], lr=lr)
     m = model(init_img, data_key=data_key, **model_forward_kwargs)
 
     neuron_positions = (
-        neuron_positions
-        if neuron_positions is not None
-        else range(m.shape[1])
+        neuron_positions if neuron_positions is not None else range(m.shape[1])
     )
 
     grad_RFs = []
