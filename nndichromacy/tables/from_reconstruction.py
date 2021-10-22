@@ -50,9 +50,7 @@ class ReconMethod(mixins.MEIMethodMixin, dj.Lookup):
         method_fn, method_config = (self & key).fetch1("method_fn", "method_config")
         if "image_repeat" in method_config:
             print("... updating method config ...")
-            dataloaders = (
-                Reconstruction().trained_model_table.dataset_table() & key
-            ).get_dataloader()
+            dataloaders = (Reconstruction().trained_model_table.dataset_table() & key).get_dataloader()
 
             responses, behavior, image = Reconstruction().get_neuronal_responses(
                 dataloaders=dataloaders,
@@ -69,9 +67,7 @@ class ReconMethod(mixins.MEIMethodMixin, dj.Lookup):
                 method_config["model_forward_kwargs"] = {}
 
             method_config["model_forward_kwargs"]["eye_pos"] = np.array([eye_pos])
-            method_config["model_forward_kwargs"]["behavior"] = np.array(
-                [behavior_list]
-            )
+            method_config["model_forward_kwargs"]["behavior"] = np.array([behavior_list])
         self.insert_key_in_ops(method_config=method_config, key=key)
         method_fn = self.import_func(method_fn)
         mei, score, output = method_fn(dataloaders, model, method_config, seed)
@@ -339,11 +335,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
                 data_key=key["data_key"],
                 **forward_kwargs,
             )
-        return (
-            responses
-            if constraint is None or len(constraint) == 0
-            else responses[:, constraint]
-        )
+        return responses if constraint is None or len(constraint) == 0 else responses[:, constraint]
 
     def get_neuronal_responses(
         self,
@@ -355,9 +347,7 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
     ):
         data_key = (self.target_unit_table & key).fetch1("data_key")
         dat = dataloaders["train"][data_key].dataset
-        image_class, image_id = (self.base_image_table & key).fetch1(
-            "image_class", "image_id"
-        )
+        image_class, image_id = (self.base_image_table & key).fetch1("image_class", "image_id")
         image_repeat = method_config.get("image_repeat", None)
         if return_behavior:
             behavior_keys = get_image_data_from_dataset(
@@ -411,12 +401,8 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
         dataset_config = (self.trained_model_table.dataset_table & key).fetch1("dataset_config")
         mean, std = [dataset_config.get(i, None) for i in ["inputs_mean", "inputs_std"]]
         if mean is None:
-            mean = dataloaders["train"][
-                key["data_key"]
-            ].dataset.statistics.images.all.mean
-            std = dataloaders["train"][
-                key["data_key"]
-            ].dataset.statistics.images.all.std
+            mean = dataloaders["train"][key["data_key"]].dataset.statistics.images.all.mean
+            std = dataloaders["train"][key["data_key"]].dataset.statistics.images.all.std
         return mean, std
 
     def _insert_responses(self, response_entity: Dict[str, Any]) -> None:
@@ -449,15 +435,11 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
                 method_config["model_forward_kwargs"] = {}
 
             method_config["model_forward_kwargs"]["eye_pos"] = np.array([eye_pos])
-            method_config["model_forward_kwargs"]["behavior"] = np.array(
-                [behavior_list]
-            )
+            method_config["model_forward_kwargs"]["behavior"] = np.array([behavior_list])
 
         else:
             img_mean, img_std = self.get_dataset_statistics(key, dataloaders)
-            image = self.get_original_image(
-                key, img_statistics=(img_mean, img_std), dataloaders=dataloaders
-            )
+            image = self.get_original_image(key, img_statistics=(img_mean, img_std), dataloaders=dataloaders)
             initial_img = get_initial_image(
                 dataloaders=dataloaders,
                 method_config=method_config,
