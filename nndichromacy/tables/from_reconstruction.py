@@ -274,7 +274,7 @@ class ReconObjective(dj.Computed):
         target_fn: Callable,
         unit_ids: List,
         data_key: str,
-    ) -> ConstrainedOutputModel:
+    ) -> constrained_output_model:
 
         return self.constrained_output_model(model, unit_ids, target_fn, forward_kwargs=dict(data_key=data_key))
 
