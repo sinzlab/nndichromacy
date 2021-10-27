@@ -11,21 +11,23 @@ from ..tables.scores import MEINorm, MEINormBlue, MEINormGreen
 
 
 class BlurAndCut:
-    """Blur an image with a Gaussian window.
+    """Blur image or gradients with a Gaussian window."""
 
-    Arguments:
-        sigma (float or tuple): Standard deviation in y, x used for the gaussian blurring.
-        decay_factor (float): Compute sigma every iteration as `sigma + decay_factor *
-            (iteration - 1)`. Ignored if None.
-        truncate (float): Gaussian window is truncated after this number of standard
-            deviations to each side. Size of kernel = 8 * sigma + 1
-        pad_mode (string): Mode for the padding used for the blurring. Valid values are:
-            'constant', 'reflect' and 'replicate'
-    """
-
-    def __init__(
+    def __init__(        
         self, sigma, decay_factor=None, truncate=4, pad_mode="reflect", cut_channel=None
     ):
+        """Blur image or gradients with a Gaussian window. Initialize callable class.
+
+        Args:
+            sigma (float or tuple): Standard deviation in y, x used for the gaussian blurring
+            truncate (float, optional): Gaussian window is truncated after this number of standard deviations to each
+                side. Defaults to 4.
+            pad_mode (str, optional): Images / gradients are padded by `truncate * sigma` to each side by using this
+                padding mode. Valid uses are 'constant', 'reflect' and 'replicate'. Defaults to "reflect".
+            decay_factor (float): Compute sigma every iteration as `sigma + decay_factor *
+                (iteration - 1)`. Ignored if None.
+            cut_channel (int): Cout out this channel
+        """
         self.sigma = sigma if isinstance(sigma, tuple) else (sigma,) * 2
         self.decay_factor = decay_factor
         self.truncate = truncate
@@ -58,11 +60,11 @@ class BlurAndCut:
         )
         blurred_x = F.conv2d(
             padded_x,
-            y_gaussian.repeat(num_channels, 1, 1)[..., None],
+            y_gaussian.repeat(num_channels, num_channels, 1)[..., None],
             groups=num_channels,
         )
         blurred_x = F.conv2d(
-            blurred_x, x_gaussian.repeat(num_channels, 1, 1, 1), groups=num_channels
+            blurred_x, x_gaussian.repeat(num_channels, num_channels, 1, 1), groups=num_channels
         )
         final_x = blurred_x / (y_gaussian.sum() * x_gaussian.sum())  # normalize
         if self.cut_channel is not None:
