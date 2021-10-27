@@ -13,9 +13,7 @@ from ..tables.scores import MEINorm, MEINormBlue, MEINormGreen
 class BlurAndCut:
     """Blur image or gradients with a Gaussian window."""
 
-    def __init__(        
-        self, sigma, decay_factor=None, truncate=4, pad_mode="reflect", cut_channel=None
-    ):
+    def __init__(self, sigma, decay_factor=None, truncate=4, pad_mode="reflect", cut_channel=None):
         """Blur image or gradients with a Gaussian window. Initialize callable class.
 
         Args:
@@ -55,17 +53,13 @@ class BlurAndCut:
         x_gaussian = torch.as_tensor(x_gaussian, device=x.device, dtype=x.dtype)
 
         # Blur
-        padded_x = F.pad(
-            x, pad=(x_halfsize, x_halfsize, y_halfsize, y_halfsize), mode=self.pad_mode
-        )
+        padded_x = F.pad(x, pad=(x_halfsize, x_halfsize, y_halfsize, y_halfsize), mode=self.pad_mode)
         blurred_x = F.conv2d(
             padded_x,
             y_gaussian.repeat(num_channels, num_channels, 1)[..., None],
             groups=num_channels,
         )
-        blurred_x = F.conv2d(
-            blurred_x, x_gaussian.repeat(num_channels, num_channels, 1, 1), groups=num_channels
-        )
+        blurred_x = F.conv2d(blurred_x, x_gaussian.repeat(num_channels, num_channels, 1, 1), groups=num_channels)
         final_x = blurred_x / (y_gaussian.sum() * x_gaussian.sum())  # normalize
         if self.cut_channel is not None:
             final_x[:, self.cut_channel, ...] *= 0
@@ -190,9 +184,7 @@ class ClipNormInChannel:
         if self.x_min is None:
             return x
         else:
-            x[:, self.channel, ...] = torch.clamp(
-                x[:, self.channel, ...], self.x_min, self.x_max
-            )
+            x[:, self.channel, ...] = torch.clamp(x[:, self.channel, ...], self.x_min, self.x_max)
             return x
 
 
@@ -233,18 +225,14 @@ class ClipNormInChannelAdaptivePupil:
     @varargin
     def __call__(self, x, iteration=None):
 
-        x[:, self.pupil_channel, ...] = np.random.uniform(
-            self.min_pupil, self.max_pupil
-        )
+        x[:, self.pupil_channel, ...] = np.random.uniform(self.min_pupil, self.max_pupil)
         x_norm = torch.norm(x[:, self.channel, ...])
         if x_norm > self.norm:
             x[:, self.channel, ...] = x[:, self.channel, ...] * (self.norm / x_norm)
         if self.x_min is None:
             return x
         else:
-            x[:, self.channel, ...] = torch.clamp(
-                x[:, self.channel, ...], self.x_min, self.x_max
-            )
+            x[:, self.channel, ...] = torch.clamp(x[:, self.channel, ...], self.x_min, self.x_max)
             return x
 
 
@@ -277,15 +265,9 @@ class ChangeNormShuffleBehavior:
     def __call__(self, x, iteration=None):
         x_norm = torch.norm(x[:, self.channel, ...])
         x[:, self.channel, ...] = x[:, self.channel, ...] * (self.norm / x_norm)
-        x[:, self.first_behav_channel, ...] = np.random.uniform(
-            self.pupil_limits[0], self.pupil_limits[1]
-        )
-        x[:, self.first_behav_channel + 1, ...] = np.random.uniform(
-            self.dpupil_limits[0], self.dpupil_limits[1]
-        )
-        x[:, self.first_behav_channel + 2, ...] = np.random.uniform(
-            self.treadmill_limits[0], self.treadmill_limits[1]
-        )
+        x[:, self.first_behav_channel, ...] = np.random.uniform(self.pupil_limits[0], self.pupil_limits[1])
+        x[:, self.first_behav_channel + 1, ...] = np.random.uniform(self.dpupil_limits[0], self.dpupil_limits[1])
+        x[:, self.first_behav_channel + 2, ...] = np.random.uniform(self.treadmill_limits[0], self.treadmill_limits[1])
         return x
 
 
