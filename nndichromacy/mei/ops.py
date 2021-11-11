@@ -175,6 +175,7 @@ class ClipNormInChannel:
             x[:, self.channel, ...] = torch.clamp(x[:, self.channel, ...], self.x_min, self.x_max)
             return x
 
+
 class ClipNormInChannelforRingFlexNorm:
     """ Change the norm of the input.
 
@@ -221,6 +222,7 @@ class ClipNormInChannelforRingFlexNorm:
         else:
            x[:, self.channel, ...] = torch.clamp(x[:, self.channel, ...], self.x_min, self.x_max)
         return x
+
 
 class ClipNormInChannelforRing:
     """ Change the norm of the input.
@@ -310,6 +312,52 @@ class ClipNormInChannelforSurround:
             x[:, self.channel2, ...] = torch.clamp(x[:, self.channel2, ...], self.x_min_ch2, self.x_max_ch2)
         return x
 
+class ClipNormInChannelforCenter:
+    """ Change the norm of the input.
+
+    Arguments:
+        norm (float or tensor): Desired norm. If tensor, it should be the same length as
+            x.
+    """
+
+    def __init__(self, channel1, key, mask_thres=0.3,norm_ch1=None, channel2=None,norm_ch2=None, x_min_ch1=None, x_max_ch1=None, x_min_ch2=None, x_max_ch2=None):
+
+        self.channel1 = channel1
+        self.norm_ch1 = norm_ch1
+        self.x_min_ch1 = x_min_ch1
+        self.x_max_ch1 = x_max_ch1
+        
+        self.channel2 = channel2
+        if self.channel2 is not None:
+            self.norm_ch2 = norm_ch2
+            self.x_min_ch2 = x_min_ch2
+            self.x_max_ch2 = x_max_ch2
+
+        src_method_fn = key["src_method_fn"]
+        inner_ensemble_hash = key["inner_ensemble_hash"]
+        inner_method_hash = key["inner_method_hash"]
+        unit_id = key["unit_id"]
+
+        inner_mei_path = (MEI & dict(method_fn=src_method_fn) & dict(ensemble_hash=inner_ensemble_hash) & dict(method_hash=inner_method_hash) & dict(unit_id=unit_id)).fetch1('mei', download_path=fetch_download_path)
+        
+        inner_mei=torch.load(inner_mei_path)
+
+        self.center_mask=(inner_mei[0][1] > mask_thres) * 1
+
+    @varargin
+    def __call__(self, x, iteration=None):
+
+        x_norm_ch1 = torch.norm(x[:, self.channel1, ...] * (self.center_mask).to(x.device)) 
+        if self.norm_ch1 is not None:
+            if x_norm_ch1 > self.norm_ch1:
+                x[:, self.channel1, ...] = x[:, self.channel1, ...] * (self.center_mask).to(x.device) * (self.norm_ch1 / x_norm_ch1)
+        if self.x_min_ch1 or self.x_max_ch1 is not None:
+            x[:, self.channel1, ...] = torch.clamp(x[:, self.channel1, ...], self.x_min_ch1, self.x_max_ch1)
+
+        # when there is transparent channel
+        if self.channel2 is not None:
+            x[:, self.channel2, ...] = torch.clamp(x[:, self.channel2, ...], self.x_min_ch2, self.x_max_ch2)
+        return x
 
 class ClipNormInAllChannel: 
     """ When need add transparency to visualization, change the norm of the input for different channel separately (i.e. color channel & transparent channel)
