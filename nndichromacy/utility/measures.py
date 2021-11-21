@@ -80,8 +80,6 @@ def model_predictions_repeats(
 
     if broadcast_to_target:
         output = [np.broadcast_to(x, target[idx].shape) for idx, x in enumerate(output)]
-        print("continue here")
-        print("broadcasted")
     return target, output
 
 
@@ -782,7 +780,6 @@ def get_r2er(
 ):
     """
     from https://github.com/sinzlab/nnsysident, modified to work with behavior as channels.
-
     """
     dataloaders = dataloaders["test"] if "test" in dataloaders else dataloaders
     r2er, r2 = {}, {}

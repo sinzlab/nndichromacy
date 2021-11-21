@@ -100,8 +100,9 @@ class MEIMethod(mixins.MEIMethodMixin, dj.Lookup):
     def insert_key_in_ops(self, method_config, key):
         for k, v in method_config.items():
             if k in self.optional_names:
-                if "key" in v["kwargs"]:
-                    v["kwargs"]["key"] = key
+                if "kwargs" in v:
+                    if "key" in v["kwargs"]:
+                        v["kwargs"]["key"] = key
 
 
 @schema
@@ -176,3 +177,5 @@ class MEIScore(dj.Computed):
         score = self.measure_function(mei, **self.function_kwargs)
         key[self.measure_attribute] = score
         self.insert1(key, ignore_extra_fields=True)
+
+
