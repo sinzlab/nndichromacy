@@ -446,6 +446,18 @@ class CtAeCSCenterSurrMixed(ScoringTable):
     dataloader_function_kwargs = dict(image_condition="imagenet_color_center_surround_mixed")
 
 @schema
+class CtAeCSCenterSurrMixedSel(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "train"
+    measure_attribute = "ctae_cs_center_surr_mixed"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_center_surround_mixed_selected")
+
+@schema
 class CtAeCSFull(ScoringTable):
     trainedmodel_table = TrainedEnsembleModel
     dataset_table = Dataset
@@ -545,42 +557,6 @@ class FractionOracleJackknifeEnsembleGreenSet(SummaryScoringTable):
     model_cache = EnsembleModelCache
     dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb_green_only")
 
-
-@schema
-class MEINorm(MEIScore):
-    measure_function = staticmethod(get_mei_norm)
-    measure_attribute = "mei_norm"
-    external_download_path = fetch_download_path
-
-
-@schema
-class MEINormBlue(MEIScore):
-    measure_function = staticmethod(get_mei_norm)
-    measure_attribute = "mei_norm"
-    external_download_path = fetch_download_path
-    function_kwargs = dict(channel=1)
-
-
-@schema
-class MEINormGreen(MEIScore):
-    measure_function = staticmethod(get_mei_norm)
-    measure_attribute = "mei_norm"
-    external_download_path = fetch_download_path
-    function_kwargs = dict(channel=0)
-
-
-@schema
-class MEIColorBias(MEIScore):
-    measure_function = staticmethod(get_mei_color_bias)
-    measure_attribute = "mei_color_bias"
-    external_download_path = fetch_download_path
-
-
-@schema
-class MEIMichelsonContrast(MEIScore):
-    measure_function = staticmethod(get_mei_michelson_contrast)
-    measure_attribute = "michelson_contrast"
-    external_download_path = fetch_download_path
 
 
 @schema

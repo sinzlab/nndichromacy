@@ -180,6 +180,16 @@ class OracleCorrCSCenterSurrMixed(MeasuresTable):
     dataloader_function_kwargs = dict(image_condition="imagenet_color_center_surround_mixed")
 
 @schema
+class OracleCorrCSCenterSurrMixedSel(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_oracles_corrected)
+    measure_dataset = "train"
+    measure_attribute = "oc_cs_center_surr_mixed"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_center_surround_mixed_selected")
+
+@schema
 class OracleCorrCSFull(MeasuresTable):
     dataset_table = Dataset
     unit_table = MEISelector
@@ -240,6 +250,16 @@ class AvgFireCSCenterSurrMixed(MeasuresTable):
     measure_attribute = "af_cs_center_surr_mixed"
     data_cache = DataCache
     dataloader_function_kwargs = dict(image_condition="imagenet_color_center_surround_mixed")
+
+@schema
+class AvgFireCSCenterSurrMixedSel(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_firing)
+    measure_dataset = "train"
+    measure_attribute = "af_cs_center_surr_mixed"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_center_surround_mixed_selected")
 
 @schema
 class AvgFireCSFull(MeasuresTable):
