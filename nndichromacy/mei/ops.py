@@ -13,7 +13,7 @@ import os
 fetch_download_path = os.environ.get('FETCH_DOWNLOAD_PATH', '/data/fetched_from_attach')
 
 class BlurAndCut:
-    """ Blur an image with a Gaussian window.
+    """Blur an image with a Gaussian window.
 
     Arguments:
         sigma (float or tuple): Standard deviation in y, x used for the gaussian blurring.
@@ -25,7 +25,9 @@ class BlurAndCut:
             'constant', 'reflect' and 'replicate'
     """
 
-    def __init__(self, sigma, decay_factor=None, truncate=4, pad_mode="reflect", cut_channel=None):
+    def __init__(
+        self, sigma, decay_factor=None, truncate=4, pad_mode="reflect", cut_channel=None
+    ):
         self.sigma = sigma if isinstance(sigma, tuple) else (sigma,) * 2
         self.decay_factor = decay_factor
         self.truncate = truncate
@@ -53,9 +55,17 @@ class BlurAndCut:
         x_gaussian = torch.as_tensor(x_gaussian, device=x.device, dtype=x.dtype)
 
         # Blur
-        padded_x = F.pad(x, pad=(x_halfsize, x_halfsize, y_halfsize, y_halfsize), mode=self.pad_mode)
-        blurred_x = F.conv2d(padded_x, y_gaussian.repeat(num_channels, 1, 1)[..., None], groups=num_channels)
-        blurred_x = F.conv2d(blurred_x, x_gaussian.repeat(num_channels, 1, 1, 1), groups=num_channels)
+        padded_x = F.pad(
+            x, pad=(x_halfsize, x_halfsize, y_halfsize, y_halfsize), mode=self.pad_mode
+        )
+        blurred_x = F.conv2d(
+            padded_x,
+            y_gaussian.repeat(num_channels, 1, 1)[..., None],
+            groups=num_channels,
+        )
+        blurred_x = F.conv2d(
+            blurred_x, x_gaussian.repeat(num_channels, 1, 1, 1), groups=num_channels
+        )
         final_x = blurred_x / (y_gaussian.sum() * x_gaussian.sum())  # normalize
         if self.cut_channel is not None:
             final_x[:, self.cut_channel, ...] *= 0
@@ -124,7 +134,7 @@ class BlurAndCutSurr:
         return final_x
 
 class ChangeNormAndClip:
-    """ Change the norm of the input.
+    """Change the norm of the input.
 
     Arguments:
         norm (float or tensor): Desired norm. If tensor, it should be the same length as
@@ -144,7 +154,7 @@ class ChangeNormAndClip:
 
 
 class ChangeNormAndClipAdaptive:
-    """ Change the norm of the input.
+    """Change the norm of the input.
 
     Arguments:
         norm (float or tensor): Desired norm. If tensor, it should be the same length as
@@ -155,7 +165,11 @@ class ChangeNormAndClipAdaptive:
         norm_key = dict()
         norm_key.update(key)
         norm_key["method_hash"] = method_key
-        self.norm = (MEINormGreen & norm_key).fetch1("mei_norm") if channel == 0 else (MEINormBlue & norm_key).fetch1("mei_norm")
+        self.norm = (
+            (MEINormGreen & norm_key).fetch1("mei_norm")
+            if channel == 0
+            else (MEINormBlue & norm_key).fetch1("mei_norm")
+        )
         self.x_min = x_min
         self.x_max = x_max
 
@@ -167,7 +181,7 @@ class ChangeNormAndClipAdaptive:
 
 
 class ChangeNormAdaptiveAndClip:
-    """ Change the norm of the input.
+    """Change the norm of the input.
 
     Arguments:
         norm (float or tensor): Desired norm. If tensor, it should be the same length as
@@ -179,7 +193,11 @@ class ChangeNormAdaptiveAndClip:
         norm_key.update(key)
         norm_key["method_hash"] = method_key
         self.channel = channel
-        self.norm = (MEINormGreen & norm_key).fetch1("mei_norm") if self.channel == 0 else (MEINormBlue & norm_key).fetch1("mei_norm")
+        self.norm = (
+            (MEINormGreen & norm_key).fetch1("mei_norm")
+            if self.channel == 0
+            else (MEINormBlue & norm_key).fetch1("mei_norm")
+        )
         self.x_min = x_min
         self.x_max = x_max
 
@@ -191,7 +209,7 @@ class ChangeNormAdaptiveAndClip:
 
 
 class ChangeNormInChannel:
-    """ Change the norm of the input.
+    """Change the norm of the input.
 
     Arguments:
         norm (float or tensor): Desired norm. If tensor, it should be the same length as
@@ -211,7 +229,7 @@ class ChangeNormInChannel:
 
 
 class ClipNormInChannel:
-    """ Change the norm of the input.
+    """Change the norm of the input.
 
     Arguments:
         norm (float or tensor): Desired norm. If tensor, it should be the same length as
@@ -232,7 +250,61 @@ class ClipNormInChannel:
         if self.x_min is None:
             return x
         else:
-            x[:, self.channel, ...] = torch.clamp(x[:, self.channel, ...], self.x_min, self.x_max)
+            x[:, self.channel, ...] = torch.clamp(
+                x[:, self.channel, ...], self.x_min, self.x_max
+            )
+            return x
+
+
+class ClipNormInChannelAdaptivePupil:
+    """Change the norm of the input.
+
+    Arguments:
+        norm (float or tensor): Desired norm. If tensor, it should be the same length as
+            x.
+    """
+
+    def __init__(
+        self,
+        channel,
+        norm,
+        key,
+        threshold_percentile,
+        pupil_channel,
+        x_min=None,
+        x_max=None,
+    ):
+        self.channel = channel
+        self.norm = norm
+        self.x_min = x_min
+        self.x_max = x_max
+        self.pupil_channel = pupil_channel
+
+        from ..tables.from_nnfabrik import Dataset
+
+        dataloaders = (Dataset & key).get_dataloader()
+        behaviors = []
+        for b in dataloaders["train"][key["data_key"]]:
+            behaviors.append(b.behavior.cpu().numpy())
+        behaviors = np.vstack(behaviors)
+        self.min_pupil = np.percentile(behaviors[:, 0], 0)
+        self.max_pupil = np.percentile(behaviors[:, 0], threshold_percentile)
+
+    @varargin
+    def __call__(self, x, iteration=None):
+
+        x[:, self.pupil_channel, ...] = np.random.uniform(
+            self.min_pupil, self.max_pupil
+        )
+        x_norm = torch.norm(x[:, self.channel, ...])
+        if x_norm > self.norm:
+            x[:, self.channel, ...] = x[:, self.channel, ...] * (self.norm / x_norm)
+        if self.x_min is None:
+            return x
+        else:
+            x[:, self.channel, ...] = torch.clamp(
+                x[:, self.channel, ...], self.x_min, self.x_max
+            )
             return x
 
 class ClipNormInChannelSurr:
@@ -514,20 +586,22 @@ class ClipNormInAllChannel:
         return x
 
 class ChangeNormShuffleBehavior:
-    """ Change the norm of the input.
+    """Change the norm of the input.
 
     Arguments:
         norm (float or tensor): Desired norm. If tensor, it should be the same length as
             x.
     """
 
-    def __init__(self,
-                 channel,
-                 norm,
-                 first_behav_channel,
-                 pupil_limits,
-                 dpupil_limits,
-                 treadmill_limits):
+    def __init__(
+        self,
+        channel,
+        norm,
+        first_behav_channel,
+        pupil_limits,
+        dpupil_limits,
+        treadmill_limits,
+    ):
 
         self.channel = channel
         self.norm = norm
@@ -540,13 +614,19 @@ class ChangeNormShuffleBehavior:
     def __call__(self, x, iteration=None):
         x_norm = torch.norm(x[:, self.channel, ...])
         x[:, self.channel, ...] = x[:, self.channel, ...] * (self.norm / x_norm)
-        x[:, self.first_behav_channel, ...] = np.random.uniform(self.pupil_limits[0], self.pupil_limits[1])
-        x[:, self.first_behav_channel+1, ...] = np.random.uniform(self.dpupil_limits[0], self.dpupil_limits[1])
-        x[:, self.first_behav_channel+2, ...] = np.random.uniform(self.treadmill_limits[0], self.treadmill_limits[1])
+        x[:, self.first_behav_channel, ...] = np.random.uniform(
+            self.pupil_limits[0], self.pupil_limits[1]
+        )
+        x[:, self.first_behav_channel + 1, ...] = np.random.uniform(
+            self.dpupil_limits[0], self.dpupil_limits[1]
+        )
+        x[:, self.first_behav_channel + 2, ...] = np.random.uniform(
+            self.treadmill_limits[0], self.treadmill_limits[1]
+        )
         return x
 
 class ChangeStdClampedMean:
-    """ Change the norm of the input.
+    """Change the norm of the input.
 
     Arguments:
         norm (float or tensor): Desired norm. If tensor, it should be the same length as
@@ -562,7 +642,7 @@ class ChangeStdClampedMean:
 
     @varargin
     def __call__(self, x, iteration=None):
-        x = x.clamp(self.x_min,  self.x_max)
+        x = x.clamp(self.x_min, self.x_max)
         x_std = torch.std(x.view(len(x), -1), dim=-1)
 
         # set x to have the desired std

@@ -51,21 +51,31 @@ class TrainedEnsembleModelTemplate(dj.Manual):
         """
         print("creating ensemble")
         if len(self.dataset_table() & key) != 1:
-            raise ValueError("Provided key not sufficient to restrict dataset table to one entry!")
+            raise ValueError(
+                "Provided key not sufficient to restrict dataset table to one entry!"
+            )
         dataset_key = (self.dataset_table().proj() & key).fetch1()
         if model_keys is None:
             models = (self.trained_model_table().proj() & key).fetch(as_dict=True)
         else:
-            print("model dictionties were passed - creating ensemble with {} models".format(len(model_keys)))
+            print(
+                "model dictionties were passed - creating ensemble with {} models".format(
+                    len(model_keys)
+                )
+            )
             models = model_keys
-        ensemble_table_key = dict(dataset_key, ensemble_hash=integration.hash_list_of_dictionaries(models))
+        ensemble_table_key = dict(
+            dataset_key, ensemble_hash=integration.hash_list_of_dictionaries(models)
+        )
         self.insert1(ensemble_table_key)
 
         self.Member().insert([{**ensemble_table_key, **m} for m in models])
 
     def load_model(self, key=None):
         """Wrapper to preserve the interface of the trained model table."""
-        return integration.load_ensemble_model(self.Member, self.trained_model_table, key=key)
+        return integration.load_ensemble_model(
+            self.Member, self.trained_model_table, key=key
+        )
 
 
 class CSRFV1SelectorTemplate(dj.Computed):
@@ -128,14 +138,21 @@ class MouseSelectorTemplate(dj.Computed):
         dataset_config = (Dataset & key).fetch1("dataset_config")
 
         path = dataset_config["paths"][0]
-        dat = StaticImageSet(path, 'images', 'responses')
+        dat = StaticImageSet(path, "images", "responses")
         neuron_ids = dat.neurons.unit_ids
 
-        data_key = path.split('static')[-1].split('.')[0].replace('preproc', '')
+        data_key = path.split("static")[-1].split(".")[0].replace("preproc", "")
 
         mappings = []
         for neuron_pos, neuron_id in enumerate(neuron_ids):
-            mappings.append(dict(key, neuron_id=neuron_id, neuron_position=neuron_pos, session_id=data_key))
+            mappings.append(
+                dict(
+                    key,
+                    neuron_id=neuron_id,
+                    neuron_position=neuron_pos,
+                    session_id=data_key,
+                )
+            )
 
         self.insert(mappings)
 
@@ -156,7 +173,13 @@ class MEIMethod(dj.Lookup):
     """
 
     def add_method(self, method_fn, method_config):
-        self.insert1(dict(method_fn=method_fn, method_hash=make_hash(method_config), method_config=method_config))
+        self.insert1(
+            dict(
+                method_fn=method_fn,
+                method_hash=make_hash(method_config),
+                method_config=method_config,
+            )
+        )
 
     def generate_mei(self, dataloader, model, key):
         method_fn, method_config = (self & key).fetch1("method_fn", "method_config")
@@ -196,12 +219,18 @@ class MEITemplate(dj.Computed):
             cache_size_limit: An integer indicating the maximum number of cached models.
         """
         super().__init__()
-        self.model_loader = integration.ModelLoader(self.trained_model_table, cache_size_limit=cache_size_limit)
+        self.model_loader = integration.ModelLoader(
+            self.trained_model_table, cache_size_limit=cache_size_limit
+        )
 
     def make(self, key):
         dataloaders, model = self.model_loader.load(key=key)
-        output_selected_model = self.selector_table().get_output_selected_model(model, key)
-        mei_entity = self.method_table().generate_mei(dataloaders, output_selected_model, key)
+        output_selected_model = self.selector_table().get_output_selected_model(
+            model, key
+        )
+        mei_entity = self.method_table().generate_mei(
+            dataloaders, output_selected_model, key
+        )
         self._insert_mei(mei_entity)
 
     def _insert_mei(self, mei_entity):

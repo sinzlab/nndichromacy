@@ -2,7 +2,7 @@ import torch
 
 
 def varargin(f):
-    """ Decorator to make a function able to ignore named parameters not declared in its
+    """Decorator to make a function able to ignore named parameters not declared in its
      definition.
 
     Arguments:
@@ -39,7 +39,7 @@ def varargin(f):
 
 
 class Compose:
-    """ Chain a set of operations into a single function.
+    """Chain a set of operations into a single function.
 
     Each function must receive one positional argument and any number of keyword
     arguments. Each function is called with the output of the previous one (as its
@@ -67,7 +67,7 @@ class Compose:
 
 
 class Combine:
-    """ Applies different operations to an input and combines its output.
+    """Applies different operations to an input and combines its output.
 
     Arguments:
         operations (list): List of operations

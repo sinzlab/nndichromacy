@@ -13,7 +13,7 @@ from functools import partial
 
 import datajoint as dj
 from nnfabrik.main import Dataset
-from nnfabrik.utility.dj_helpers import CustomSchema
+from nnfabrik.utility.dj_helpers import CustomSchema, make_hash, cleanup_numpy_scalar
 from nnfabrik.builder import resolve_fn
 from mei import mixins
 from mei.main import MEISeed
@@ -22,6 +22,7 @@ from .from_nnfabrik import TrainedModel
 
 schema = CustomSchema(dj.config.get("nnfabrik.schema_name", "nnfabrik_core"))
 resolve_target_fn = partial(resolve_fn, default_base="targets")
+resolve_mask_fn = partial(resolve_fn, default_base="masks")
 
 
 class MouseSelectorTemplate(dj.Computed):
@@ -79,8 +80,9 @@ class MEISelector(MouseSelectorTemplate):
 @schema
 class MEIMethod(mixins.MEIMethodMixin, dj.Lookup):
     seed_table = MEISeed
-    optional_names = optional_names = (
+    optional_names = (
         "initial",
+        "optimizer",
         "transform",
         "regularization",
         "precondition",
@@ -94,15 +96,6 @@ class MEIMethod(mixins.MEIMethodMixin, dj.Lookup):
         self.insert_key_in_ops(method_config=method_config, key=key)
         method_fn = self.import_func(method_fn)
         mei, score, output = method_fn(dataloaders, model, method_config, seed)
-        return dict(key, mei=mei, score=score, output=output)
-
-    def generate_ringmei(self, dataloaders: Dataloaders, model: Module, key: Key, seed: int, ring_mask: Tensor
-    ) -> Dict[str, Any]:
-        method_fn, method_config = (self & key).fetch1("method_fn", "method_config")
-        method_fn = self.import_func(method_fn)
-        self.insert_key_in_ops(method_config=method_config, key=key)
-
-        mei, score, output = method_fn(dataloaders, model, method_config, seed,ring_mask)
         return dict(key, mei=mei, score=score, output=output)
 
     def insert_key_in_ops(self, method_config, key):
@@ -187,3 +180,49 @@ class MEIScore(dj.Computed):
         self.insert1(key, ignore_extra_fields=True)
 
 
+@schema
+class ThresholdMEIMaskConfig(dj.Manual):
+    definition = """
+    mask_fn:       varchar(64)
+    mask_hash:     varchar(64)
+    ---
+    zscore_threshold:  float
+    closing_iters:     int
+    gauss_sigma:       float
+    """
+
+    def add_entry(self, mask_fn, mask_config, skip_duplicates=False):
+
+        try:
+            resolve_mask_fn(mask_fn)
+        except (NameError, TypeError) as e:
+            warnings.warn(str(e) + "\nTable entry rejected")
+            return
+
+        mask_hash = make_hash(mask_config)
+        key = dict(
+            mask_fn=mask_fn,
+            mask_hash=mask_hash,
+            **mask_config,
+        )
+
+        existing = self.proj() & key
+        if existing:
+            if skip_duplicates:
+                warnings.warn("Corresponding entry found. Skipping...")
+                key = (self & (existing)).fetch1()
+            else:
+                raise ValueError("Corresponding entry already exists")
+        else:
+            self.insert1(key)
+
+        return key
+
+    @property
+    def fn_config(self):
+        mask_fn, zscore_threshold, closing_iters, gauss_sigma = self.fetch1("mask_fn", "zscore_threshold", "closing_iters", "gauss_sigma")
+        mask_fn = resolve_mask_fn(mask_fn)
+        mask_config = dict(zscore_threshold=zscore_threshold,
+                      closing_iters=closing_iters,
+                      gauss_sigma=gauss_sigma)
+        return mask_fn, mask_config
