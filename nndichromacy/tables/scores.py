@@ -565,3 +565,33 @@ class RecMichelsonContrast(MEIScore):
     measure_function = staticmethod(get_mei_michelson_contrast)
     measure_attribute = "michelson_contrast"
     external_download_path = fetch_download_path
+
+
+@schema
+class MEINorm(MEIScore):
+    measure_function = staticmethod(get_mei_norm)
+    measure_attribute = "mei_norm"
+    external_download_path = fetch_download_path
+
+
+@schema
+class MEINormBlue(MEIScore):
+    measure_function = staticmethod(get_mei_norm)
+    measure_attribute = "mei_norm"
+    external_download_path = fetch_download_path
+    function_kwargs = dict(channel=1)
+
+
+@schema
+class MEINormGreen(MEIScore):
+    measure_function = staticmethod(get_mei_norm)
+    measure_attribute = "mei_norm"
+    external_download_path = fetch_download_path
+    function_kwargs = dict(channel=0)
+
+
+@schema
+class MEIColorBias(MEIScore):
+    measure_function = staticmethod(get_mei_color_bias)
+    measure_attribute = "mei_color_bias"
+    external_download_path = fetch_download_path
