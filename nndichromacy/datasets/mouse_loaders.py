@@ -69,6 +69,7 @@ def static_loader(
     include_px_position=None,
     image_reshape_list=None,
     trial_idx_selection=None,
+    include_val_in_id_selection=False,
 ):
     """
     returns a single data loader
@@ -270,7 +271,10 @@ def static_loader(
     image_id_array = frame_image_id
     for tier in keys:
         # sample images
-        if tier == "train" and image_ids is not None and image_condition is None:
+
+        if include_val_in_id_selection and image_ids is not None and image_condition is None:
+            subset_idx = np.where((tier_array == tier) & (np.isin(image_id_array, image_ids)))[0]
+        elif tier == "train" and image_ids is not None and image_condition is None:
             subset_idx = [
                 np.where(image_id_array == image_id)[0][0] for image_id in image_ids
             ]
@@ -341,6 +345,7 @@ def static_loaders(
     include_px_position=None,
     image_reshape_list=None,
     trial_idx_selection=None,
+    include_val_in_id_selection=None,
 ):
     """
     Returns a dictionary of dataloaders (i.e., trainloaders, valloaders, and testloaders) for >= 1 dataset(s).
@@ -423,6 +428,7 @@ def static_loaders(
             include_px_position=include_px_position,
             image_reshape_list=image_reshape_list,
             trial_idx_selection=trial_idx_selection,
+            include_val_in_id_selection=include_val_in_id_selection,
         )
         if not return_test_sampler:
             for k in dls:
