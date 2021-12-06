@@ -1,5 +1,5 @@
 import datajoint as dj
-
+from .mei_scores import MEINorm, MEINormBlue, MEINormGreen
 from nnfabrik.main import Model, Dataset, Trainer, Seed, Fabrikant
 
 from ..utility.measures import (
