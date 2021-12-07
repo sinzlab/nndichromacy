@@ -123,7 +123,7 @@ def static_loader(
         [exclude_neuron_n == 0, neuron_base_seed is not None]
     ), "neuron_base_seed must be set when exclude_neuron_n is not 0"
 
-    if image_ids is not None and image_condition is not None:
+    if image_ids is not None and image_condition is not None and not return_test_sampler :
         raise ValueError(
             "either 'image_condition' or 'image_ids' can be passed. They can not both be true."
         )
