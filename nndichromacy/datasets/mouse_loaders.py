@@ -250,6 +250,9 @@ def static_loader(
     elif "frame_image_id" in dir(dat_info):
         frame_image_id = dat_info.frame_image_id
         image_class = dat_info.frame_image_class
+    elif "frame2_image_id" in dir(dat_info):
+        frame_image_id = dat_info.frame2_image_id
+        image_class = dat_info.frame2_image_class
     else:
         raise ValueError(
             "'image_id' 'colorframeprojector_image_id', or 'frame_image_id' have to present in the dataset under dat.info "
