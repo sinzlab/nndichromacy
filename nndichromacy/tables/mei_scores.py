@@ -3,7 +3,6 @@ import torch
 
 from nnfabrik.utility.dj_helpers import CustomSchema
 from .from_mei import MEIScore, ThresholdMEIMaskConfig
-from .surrMEI import SurrMEI
 from ..utility.measures import (
     get_oracles,
     get_repeats,
@@ -62,13 +61,6 @@ class MEIMichelsonContrast(MEIScore):
     measure_attribute = "michelson_contrast"
     external_download_path = fetch_download_path
 
-@schema
-class MEISurroundMichelsonContrast(MEIScore):
-    mei_table = SurrMEI
-    measure_function = staticmethod(get_mei_michelson_contrast)
-    measure_attribute = "michelson_contrast"
-    external_download_path = fetch_download_path
-
 
 @schema
 class MEIThresholdMask(MEIScore):
@@ -111,3 +103,14 @@ class MEIThresholdMask(MEIScore):
         mask = mask_fn(mei, **mask_config)
         key["mask"] = mask
         self.insert1(key, ignore_extra_fields=True)
+
+
+from nndichromacy.tables.surroundMEI import SurroundMEI
+@schema
+class MEISurroundMichelsonContrast(MEIScore):
+    mei_table = SurroundMEI
+    measure_function = staticmethod(get_mei_michelson_contrast)
+    measure_attribute = "michelson_contrast"
+    external_download_path = fetch_download_path
+
+

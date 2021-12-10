@@ -26,7 +26,6 @@ from mei.modules import EnsembleModel, ConstrainedOutputModel
 from .from_mei import TrainedEnsembleModel
 from .from_mei import MEISelector
 from .from_mei import MEI
-from .from_nnfabrik import TrainedModel
 from .mei_scores import MEIThresholdMask
 from .surrMEI import SurrMEIRelateHash
 from mei import mixins
