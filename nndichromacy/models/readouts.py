@@ -682,10 +682,11 @@ class CenterSurround2d(nn.Module):
         Args:
             average(bool): if True, use mean of weights for regularization
         """
-        if average:
-            return self.features.abs().mean()
-        else:
-            return self.features.abs().sum()
+        raise NotImplementedError("self.features do not exist")
+        #if average:
+        #    return self.features.abs().mean()
+        #else:
+        #    return self.features.abs().sum()
 
     def regularizer(self, data_key=None):
         return 0.
@@ -731,4 +732,4 @@ class MultipleCenterSurround(MultiReadout, torch.nn.ModuleDict):
         self.gamma_readout = gamma_readout
 
     def regularizer(self, data_key):
-        return self[data_key].feature_l1(average=False) * self.gamma_readout
+        return self[data_key].regularizer()

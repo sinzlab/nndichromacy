@@ -4,7 +4,7 @@ import copy
 
 from torch import nn
 from torch.nn import functional as F
-
+from .readouts import MultipleCenterSurround
 
 class Encoder(nn.Module):
 
@@ -189,7 +189,11 @@ class GeneralEncoder(nn.Module):
 
             shift = self.shifter[data_key](pupil_center)
 
-        x = self.readout(x, data_key=data_key, shift=shift, behavior=behavior, **kwargs)
+        if isinstance(self.readout, MultipleCenterSurround):
+            x = self.readout(x, x, data_key=data_key, shift=shift, **kwargs)
+        else:
+            x = self.readout(x, data_key=data_key, shift=shift, behavior=behavior, **kwargs)
+
         return F.elu(x + self.offset) + 1
 
     def regularizer(self, data_key):
