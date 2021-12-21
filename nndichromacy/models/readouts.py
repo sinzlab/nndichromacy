@@ -9,12 +9,14 @@ from neuralpredictors.layers.readouts import (
     PointPooled2d,
     FullGaussian2d,
     SpatialXFeatureLinear,
+    PointPyramid2d,
 )
 from neuralpredictors.layers.legacy import Gaussian2d
 import torch
 from torch import nn
 from neuralpredictors.constraints import positive
 from .utility import cart2pol_torch
+
 
 class MultiplePointPooled2d(torch.nn.ModuleDict):
     def __init__(
@@ -42,6 +44,51 @@ class MultiplePointPooled2d(torch.nn.ModuleDict):
                     pool_kern=pool_kern,
                     bias=bias,
                     init_range=init_range,
+                ),
+            )
+        self.gamma_readout = gamma_readout
+
+    def forward(self, *args, data_key=None, **kwargs):
+        if data_key is None and len(self) == 1:
+            data_key = list(self.keys())[0]
+        return self[data_key](*args, **kwargs)
+
+    def regularizer(self, data_key):
+        return self[data_key].feature_l1(average=False) * self.gamma_readout
+
+
+class MultiplePointPyramid2d(torch.nn.ModuleDict):
+    def __init__(
+            self,
+            core,
+            in_shape_dict,
+            n_neurons_dict,
+            gamma_readout=1,
+            scale_n=5,
+            positive=False,
+            bias=True,
+            init_range=.1,
+            downsample=False,
+            type='gauss5x5',
+            align_corners=True,
+    ):
+        # super init to get the _module attribute
+        super(MultiplePointPyramid2d, self).__init__()
+        for k in n_neurons_dict:
+            in_shape = get_module_output(core, in_shape_dict[k])[1:]
+            n_neurons = n_neurons_dict[k]
+            self.add_module(
+                k,
+                PointPyramid2d(
+                    in_shape,
+                    n_neurons,
+                    scale_n=scale_n,
+                    positive=positive,
+                    bias=bias,
+                    init_range=init_range,
+                    downsample=downsample,
+                    type=type,
+                    align_corners=align_corners,
                 ),
             )
         self.gamma_readout = gamma_readout
