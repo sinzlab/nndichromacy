@@ -2,7 +2,7 @@ import datajoint as dj
 import numpy as np
 from nnfabrik.templates.trained_model import TrainedModelBase
 from nnfabrik.main import Dataset
-
+from copy import deepcopy
 
 class ScoringBase(dj.Computed):
     """
@@ -109,24 +109,16 @@ class ScoringBase(dj.Computed):
         return np.mean(np.hstack([v for v in unit_scores_dict.values()]))
 
     def insert_unit_measures(self, key, unit_measures_dict):
-        keys = []
-
-        key = key.copy()
+        all_keys = []
         for data_key, unit_scores in unit_measures_dict.items():
-            for unit_index, unit_score in enumerate(unit_scores):
-                new_dict = dict()
-                if "unit_id" in key:
-                    key.pop("unit_id")
-                if "data_key" in key:
-                    key.pop("data_key")
-                new_dict.update(key)
-                neuron_key = dict(unit_index=unit_index, data_key=data_key)
-                unit_id = ((self.unit_table & key) & neuron_key).fetch1("unit_id")
-                new_dict["unit_id"] = unit_id
-                new_dict["unit_{}".format(self.measure_attribute)] = unit_score
-                new_dict["data_key"] = data_key
-                keys.append(new_dict)
-        self.Units.insert(keys, ignore_extra_fields=True)
+            unit_ids = ((self.unit_table & key) & dict(data_key=data_key)).fetch("unit_id", order_by="unit_index")
+            for score, unit_id in zip(unit_scores, unit_ids):
+                unit_key = deepcopy(key)
+                unit_key['data_key'] = data_key
+                unit_key['unit_id'] = unit_id
+                unit_key[f"unit_{self.measure_attribute}"] = score
+                all_keys.append(unit_key)
+        self.Units.insert(all_keys, ignore_extra_fields=True)
 
     def make(self, key):
 
