@@ -69,6 +69,7 @@ def static_loader(
     include_px_position=None,
     image_reshape_list=None,
     trial_idx_selection=None,
+    train_shuffle: bool = True,
 ):
     """
     returns a single data loader
@@ -299,7 +300,7 @@ def static_loader(
 
         sampler = (
             SubsetRandomSampler(subset_idx)
-            if tier == "train"
+            if tier == "train" and train_shuffle is True
             else SubsetSequentialSampler(subset_idx)
         )
         dataloaders[tier] = DataLoader(dat, sampler=sampler, batch_size=batch_size)
@@ -341,6 +342,7 @@ def static_loaders(
     include_px_position=None,
     image_reshape_list=None,
     trial_idx_selection=None,
+    train_shuffle: bool = True,
 ):
     """
     Returns a dictionary of dataloaders (i.e., trainloaders, valloaders, and testloaders) for >= 1 dataset(s).
@@ -423,6 +425,7 @@ def static_loaders(
             include_px_position=include_px_position,
             image_reshape_list=image_reshape_list,
             trial_idx_selection=trial_idx_selection,
+            train_shuffle=train_shuffle,
         )
         if not return_test_sampler:
             for k in dls:
