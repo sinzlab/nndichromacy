@@ -47,8 +47,6 @@ def get_oracle_dataloader(
             image_class = dat_info.frame_image_class
         elif "frame2_image_id" in dir(dat_info):
             print(warnings.warn("Stimulus of kind frame2 detected. Using r_aperture as the image class"))
-
-
             image_class = dat_info.frame2_aperture_r
             condition_hashes = dat_info.frame2_image_id
 
