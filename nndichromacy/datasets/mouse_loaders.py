@@ -70,6 +70,7 @@ def static_loader(
     image_reshape_list=None,
     trial_idx_selection=None,
     include_val_in_id_selection=False,
+    train_shuffle: bool = True,
 ):
     """
     returns a single data loader
@@ -123,7 +124,7 @@ def static_loader(
         [exclude_neuron_n == 0, neuron_base_seed is not None]
     ), "neuron_base_seed must be set when exclude_neuron_n is not 0"
 
-    if image_ids is not None and image_condition is not None and not return_test_sampler :
+    if image_ids is not None and image_condition is not None:
         raise ValueError(
             "either 'image_condition' or 'image_ids' can be passed. They can not both be true."
         )
@@ -306,7 +307,7 @@ def static_loader(
 
         sampler = (
             SubsetRandomSampler(subset_idx)
-            if tier == "train"
+            if tier == "train" and train_shuffle is True
             else SubsetSequentialSampler(subset_idx)
         )
         dataloaders[tier] = DataLoader(dat, sampler=sampler, batch_size=batch_size)
@@ -349,6 +350,7 @@ def static_loaders(
     image_reshape_list=None,
     trial_idx_selection=None,
     include_val_in_id_selection=None,
+    train_shuffle: bool = True,
 ):
     """
     Returns a dictionary of dataloaders (i.e., trainloaders, valloaders, and testloaders) for >= 1 dataset(s).
@@ -432,6 +434,7 @@ def static_loaders(
             image_reshape_list=image_reshape_list,
             trial_idx_selection=trial_idx_selection,
             include_val_in_id_selection=include_val_in_id_selection,
+            train_shuffle=train_shuffle,
         )
         if not return_test_sampler:
             for k in dls:
