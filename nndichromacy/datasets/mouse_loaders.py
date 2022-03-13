@@ -302,6 +302,8 @@ def static_loader(
             assert (
                 sum(tier_array[subset_idx] != tier) == 0
             ), "image_ids contain validation or test images"
+        elif image_condition is None and image_ids is None and trial_idx_selection is not None:
+            subset_idx = np.where((tier_array == tier) & (np.isin(dat_info.trial_idx, trial_idx_selection)))[0]
         else:
             subset_idx = np.where(tier_array == tier)[0]
 
