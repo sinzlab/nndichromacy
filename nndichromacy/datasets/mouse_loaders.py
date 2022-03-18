@@ -71,6 +71,7 @@ def static_loader(
     trial_idx_selection=None,
     include_val_in_id_selection=False,
     train_shuffle: bool = True,
+    shuffle_behavior: bool = False,
 ):
     """
     returns a single data loader
@@ -140,8 +141,10 @@ def static_loader(
     if include_trial_info_keys:
         data_keys.extend(include_trial_info_keys)
 
+    if return_test_sampler:
+        shuffle_behavior=False
     if file_tree:
-        dat = FileTreeDataset(path, *data_keys)
+        dat = FileTreeDataset(path, *data_keys, shuffle_behavior=shuffle_behavior)
     else:
         dat = StaticImageSet(path, *data_keys)
 
@@ -350,6 +353,7 @@ def static_loaders(
     trial_idx_selection=None,
     include_val_in_id_selection=None,
     train_shuffle: bool = True,
+    shuffle_behavior: bool = False,
 ):
     """
     Returns a dictionary of dataloaders (i.e., trainloaders, valloaders, and testloaders) for >= 1 dataset(s).
@@ -434,6 +438,7 @@ def static_loaders(
             trial_idx_selection=trial_idx_selection,
             include_val_in_id_selection=include_val_in_id_selection,
             train_shuffle=train_shuffle,
+            shuffle_behavior=shuffle_behavior,
         )
         if not return_test_sampler:
             for k in dls:
