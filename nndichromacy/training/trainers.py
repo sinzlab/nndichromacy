@@ -44,6 +44,7 @@ def standard_trainer(
     detach_core=False,
     **kwargs
 ):
+    print("TRAINER 2")
     """
 
     Args:
