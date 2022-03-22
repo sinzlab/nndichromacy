@@ -223,7 +223,7 @@ def static_loader(
     elif "GrayImageNet" in path:
         data_key = path.split("static")[-1].split("-GrayImageNet")[0]
     else:
-        data_key = f"{dat.neurons.animal_id[0]}-{dat.neurons.session[0]}-{dat.neurons.scan_idx[0]}"
+        data_key = f"{dat.neurons.animal_ids[0]}-{dat.neurons.sessions[0]}-{dat.neurons.scan_idx[0]}"
 
     if return_test_sampler:
         dataloader = get_oracle_dataloader(
