@@ -20,6 +20,7 @@ from ..utility.measures import (
     get_mei_michelson_contrast,
     get_r2er,
 )
+from .from_reconstruction import Reconstruction
 
 schema = CustomSchema(dj.config.get("nnfabrik.schema_name", "nnfabrik_core"))
 fetch_download_path = "/data/fetched_from_attach/"
@@ -57,6 +58,14 @@ class MEIColorBias(MEIScore):
 
 @schema
 class MEIMichelsonContrast(MEIScore):
+    measure_function = staticmethod(get_mei_michelson_contrast)
+    measure_attribute = "michelson_contrast"
+    external_download_path = fetch_download_path
+
+
+@schema
+class RecMichelsonContrast(MEIScore):
+    mei_table = Reconstruction
     measure_function = staticmethod(get_mei_michelson_contrast)
     measure_attribute = "michelson_contrast"
     external_download_path = fetch_download_path
