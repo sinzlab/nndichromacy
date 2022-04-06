@@ -13,7 +13,7 @@ class Encoder(nn.Module):
         self.readout = readout
         self.offset = elu_offset
         self.shifter = shifter
-        self.nonlinearity = final_nonlinearity
+        self.readout_nonlinearity = final_nonlinearity
 
     def forward(
         self, *args, data_key=None, eye_pos=None, shift=None, trial_idx=None, **kwargs
@@ -53,7 +53,7 @@ class Encoder(nn.Module):
             shift = self.shifter[data_key](eye_pos)
 
         x = self.readout(x, data_key=data_key, shift=shift, **kwargs)
-        if self.nonlinearity is True:
+        if self.readout_nonlinearity is True:
             return F.elu(x + self.offset) + 1
         else:
             return x
