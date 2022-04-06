@@ -401,8 +401,8 @@ class Reconstruction(mixins.MEITemplateMixin, dj.Computed):
         dataset_config = (self.trained_model_table.dataset_table & key).fetch1("dataset_config")
         mean, std = [dataset_config.get(i, None) for i in ["inputs_mean", "inputs_std"]]
         if mean is None:
-            mean = dataloaders["train"][key["data_key"]].dataset.statistics.images.all.mean
-            std = dataloaders["train"][key["data_key"]].dataset.statistics.images.all.std
+            mean = dataloaders["train"][key["data_key"]].dataset.statistics.images.all.mean.item()
+            std = dataloaders["train"][key["data_key"]].dataset.statistics.images.all.std.item()
         return mean, std
 
     def _insert_responses(self, response_entity: Dict[str, Any]) -> None:
