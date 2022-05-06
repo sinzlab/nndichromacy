@@ -2,7 +2,7 @@ import datajoint as dj
 import torch
 
 from nnfabrik.utility.dj_helpers import CustomSchema
-from .from_mei import MEIScore, ThresholdMEIMaskConfig
+from .from_mei import MEIScore, ThresholdMEIMaskConfig, MEIMethod
 from ..utility.measures import (
     get_oracles,
     get_repeats,
@@ -114,3 +114,43 @@ class MEISurroundMichelsonContrast(MEIScore):
     external_download_path = fetch_download_path
 
 
+@schema
+class MEIMethodBehavior(dj.Computed):
+    definition = """
+    -> MEIMethod
+    ---
+    pupil: float
+    dpupil: float
+    running: float
+    norm: float
+    lr: float
+    x_min: float
+    x_max: float
+    eye_pos_x: float
+    eye_pos_y: float
+    """
+
+    def make(self, key):
+
+        method_config = (MEIMethod & key).fetch1("method_config")
+        if "selected_values" in method_config["initial"]["kwargs"]:
+            key["pupil"] = method_config["initial"]["kwargs"]["selected_values"][0]
+            key["dpupil"] = method_config["initial"]["kwargs"]["selected_values"][1]
+            key["running"] = method_config["initial"]["kwargs"]["selected_values"][2]
+
+        else:
+            key["pupil"] = method_config.get("initial").get("kwargs").get("channel_0", -999)
+            key["dpupil"] = method_config.get("initial").get("kwargs").get("channel_1", -999)
+            key["running"] = method_config.get("initial").get("kwargs").get("channel_2", -999)
+
+        key["norm"] = method_config.get("postprocessing").get("kwargs").get("norm", -999)
+        key["x_min"] = method_config.get("postprocessing").get("kwargs").get("x_min", -999)
+        key["x_max"] = method_config.get("postprocessing").get("kwargs").get("x_max", -999)
+
+        key["lr"] = method_config.get("optimizer").get("kwargs").get("lr", -999)
+
+
+        key["eye_pos_x"], key["eye_pos_y"] =  method_config.get("model_forward_kwargs").get("eye_pos", np.array([[-999, -999]])).squeeze()
+        self.insert1(key, ignore_extra_fields=True)
+
+#MEIMethodBehavior().populate(mei_key, display_progress=True)
