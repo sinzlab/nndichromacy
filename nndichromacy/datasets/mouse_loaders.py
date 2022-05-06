@@ -71,6 +71,7 @@ def static_loader(
     trial_idx_selection=None,
     include_val_in_id_selection=False,
     train_shuffle: bool = True,
+    shuffle_behavior: bool = False,
 ):
     """
     returns a single data loader
@@ -140,8 +141,10 @@ def static_loader(
     if include_trial_info_keys:
         data_keys.extend(include_trial_info_keys)
 
+    if return_test_sampler:
+        shuffle_behavior=False
     if file_tree:
-        dat = FileTreeDataset(path, *data_keys)
+        dat = FileTreeDataset(path, *data_keys, shuffle_behavior=shuffle_behavior)
     else:
         dat = StaticImageSet(path, *data_keys)
 
@@ -195,15 +198,12 @@ def static_loader(
         more_transforms.insert(0, ReshapeImages(image_reshape_list))
 
     if normalize:
-        try:
-            more_transforms.insert(
-                0,
-                NeuroNormalizer(
-                    dat, exclude=exclude, inputs_mean=inputs_mean, inputs_std=inputs_std
-                ),
-            )
-        except:
-            more_transforms.insert(0, NeuroNormalizer(dat, exclude=exclude))
+        more_transforms.insert(
+            0,
+            NeuroNormalizer(
+                dat, exclude=exclude, inputs_mean=inputs_mean, inputs_std=inputs_std
+            ),
+        )
 
     if scale is not None:
         more_transforms.insert(0, ScaleInputs(scale=scale))
@@ -223,7 +223,7 @@ def static_loader(
     elif "GrayImageNet" in path:
         data_key = path.split("static")[-1].split("-GrayImageNet")[0]
     else:
-        data_key = f"{dat.neurons.animal_id[0]}-{dat.neurons.session[0]}-{dat.neurons.scan_idx[0]}"
+        data_key = f"{dat.neurons.animal_ids[0]}-{dat.neurons.sessions[0]}-{dat.neurons.scan_idx[0]}"
 
     if return_test_sampler:
         dataloader = get_oracle_dataloader(
@@ -302,6 +302,8 @@ def static_loader(
             assert (
                 sum(tier_array[subset_idx] != tier) == 0
             ), "image_ids contain validation or test images"
+        elif image_condition is None and image_ids is None and trial_idx_selection is not None:
+            subset_idx = np.where((tier_array == tier) & (np.isin(dat_info.trial_idx, trial_idx_selection)))[0]
         else:
             subset_idx = np.where(tier_array == tier)[0]
 
@@ -351,6 +353,7 @@ def static_loaders(
     trial_idx_selection=None,
     include_val_in_id_selection=None,
     train_shuffle: bool = True,
+    shuffle_behavior: bool = False,
 ):
     """
     Returns a dictionary of dataloaders (i.e., trainloaders, valloaders, and testloaders) for >= 1 dataset(s).
@@ -435,6 +438,7 @@ def static_loaders(
             trial_idx_selection=trial_idx_selection,
             include_val_in_id_selection=include_val_in_id_selection,
             train_shuffle=train_shuffle,
+            shuffle_behavior=shuffle_behavior,
         )
         if not return_test_sampler:
             for k in dls:

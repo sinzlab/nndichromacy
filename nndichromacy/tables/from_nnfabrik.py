@@ -22,6 +22,8 @@ schema = CustomSchema(dj.config.get("nnfabrik.schema_name", "nnfabrik_core"))
 
 if "stores" not in dj.config:
     dj.config["stores"] = {}
+
+if "minio" not in dj.config["stores"]:
     dj.config["stores"]["minio"] = {  # store in s3
         "protocol": "s3",
         "endpoint": os.environ.get("MINIO_ENDPOINT", "DUMMY_ENDPOINT"),
@@ -29,6 +31,7 @@ if "stores" not in dj.config:
         "location": "dj-store",
         "access_key": os.environ.get("MINIO_ACCESS_KEY", "FAKEKEY"),
         "secret_key": os.environ.get("MINIO_SECRET_KEY", "FAKEKEY"),
+        "secure": True,
     }
 
 

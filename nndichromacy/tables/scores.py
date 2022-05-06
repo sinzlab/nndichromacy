@@ -1,5 +1,4 @@
 import datajoint as dj
-from .mei_scores import MEINorm, MEINormBlue, MEINormGreen
 from nnfabrik.main import Model, Dataset, Trainer, Seed, Fabrikant
 
 from ..utility.measures import (
@@ -21,7 +20,6 @@ from ..utility.measures import (
 )
 from .from_nnfabrik import TrainedModel, ScoringTable, SummaryScoringTable
 from .from_mei import MEISelector, TrainedEnsembleModel
-from .from_reconstruction import Reconstruction
 from . import DataCache, TrainedModelCache, EnsembleModelCache
 from nnfabrik.utility.dj_helpers import CustomSchema
 from .from_mei import MEIScore
@@ -557,14 +555,6 @@ class FractionOracleJackknifeEnsembleGreenSet(SummaryScoringTable):
     model_cache = EnsembleModelCache
     dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb_green_only")
 
-
-
-@schema
-class RecMichelsonContrast(MEIScore):
-    mei_table = Reconstruction
-    measure_function = staticmethod(get_mei_michelson_contrast)
-    measure_attribute = "michelson_contrast"
-    external_download_path = fetch_download_path
 
 
 @schema
