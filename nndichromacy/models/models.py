@@ -418,7 +418,7 @@ def se_core_full_gauss_readout(
             readout[key].bias.data = targets.mean(0)
 
     model = Encoder(core=core, readout=readout, elu_offset=elu_offset, shifter=shifter, 
-                    linear=linear,final_nonlinear_for_linear=final_nonlinear_for_linear,
+                    linear=linear, final_nonlinear_for_linear=final_nonlinear_for_linear,
                     n_neurons_dict=n_neurons_dict)
 
     return model

@@ -8,9 +8,15 @@ from .readouts import MultipleCenterSurround
 
 class Encoder(nn.Module):
 
-    def __init__(self, core, readout, elu_offset, linear, 
-                    final_nonlinear_for_linear,
-                    n_neurons_dict,shifter=None):
+    def __init__(self,
+                 core,
+                 readout,
+                 elu_offset,
+                 linear=None,
+                 final_nonlinear_for_linear=None,
+                 n_neurons_dict=None,
+                 shifter=None):
+
         super().__init__()
         self.core = core
         self.readout = readout
@@ -19,9 +25,6 @@ class Encoder(nn.Module):
         self.linear = linear # True or False
         self.final_nonlinear_for_linear=final_nonlinear_for_linear
         self.n_neurons_dict = n_neurons_dict
-        for session in n_neurons_dict:
-            outdim=n_neurons_dict[session]
-        self.n_neurons=outdim
 
         ### when share a and b for the whole output, initialization largely influence the model convergence
         '''if self.linear == True:
@@ -39,6 +42,9 @@ class Encoder(nn.Module):
                 self.register_parameter("b2", self.b2)'''
 
         if self.linear == True:
+            for session in n_neurons_dict:
+                outdim = n_neurons_dict[session]
+            self.n_neurons = outdim
             if self.final_nonlinear_for_linear is not None:
                 if self.final_nonlinear_for_linear >1:
                     self.a1=nn.Parameter(torch.rand(self.n_neurons))
