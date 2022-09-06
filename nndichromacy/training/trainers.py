@@ -130,7 +130,6 @@ def standart_trainer(
         if loss_accum_batch_n is None
         else loss_accum_batch_n
     )
-
     if track_training:
         tracker_dict = dict(
             correlation=partial(
@@ -139,14 +138,6 @@ def standart_trainer(
                 dataloaders=dataloaders["validation"],
                 device=device,
                 per_neuron=False,
-            ),
-            poisson_loss=partial(
-                get_poisson_loss,
-                model=model,
-                datalaoders=dataloaders["validation"],
-                device=device,
-                per_neuron=False,
-                avg=False,
             ),
         )
         if hasattr(model, "tracked_values"):
