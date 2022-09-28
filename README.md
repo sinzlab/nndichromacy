@@ -7,7 +7,7 @@ visual feature selectivity](https://www.nature.com/articles/s41586-022-05270-3ht
 
 ![plot](./figures/Fig1.png)
 
-A collaboration the Neuronal Intelligence lab of Fabian Sinz, the Neural Circuits of Vision lab of Katrin Franke, and the lab of Andreas Tolias.
+A collaboration of the Neuronal Intelligence lab of Fabian Sinz, the Neural Circuits of Vision lab of Katrin Franke, and the lab of Andreas Tolias.
 
 
 
