@@ -16,4 +16,4 @@ Visit this [repository](https://www.nature.com/articles/s41586-022-05270-3https:
 
 ## See also
 
-See [Sensorium](https://github.com/sinzlab/sensorium) for demonstrations of the CNN model and the model fitting pipeeline
+See [Sensorium](https://github.com/sinzlab/sensorium) for demos and tutorials of the CNN model and the model fitting pipeeline
