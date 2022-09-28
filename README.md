@@ -1,9 +1,19 @@
 # nndichromacy
-Visualizing the color tuning properties of mouse visual cortex with deep neural networks.
 
 ## Publication:
 Code base for the publication:
-[Behavioral state tunes mouse vision to ethological
-features through pupil dilation](https://www.biorxiv.org/content/10.1101/2021.09.03.458870v1) [BioRxiv]
+[State-dependent pupil dilation rapidly shifts
+visual feature selectivity](https://www.nature.com/articles/s41586-022-05270-3https://www.nature.com/articles/s41586-022-05270-3) [Nature, 2022]
+
+![plot](./figures/Fig1.png)
 
 A collaboration the Neuronal Intelligence lab of Fabian Sinz, the Neural Circuits of Vision lab of Katrin Franke, and the lab of Andreas Tolias.
+
+
+
+## Data
+Visit this [repository](https://www.nature.com/articles/s41586-022-05270-3https://www.nature.com/articles/s41586-022-05270-3) for the all datasets used in this study.
+
+## See also
+
+See [Sensorium](https://github.com/sinzlab/sensorium) for demonstrations of the CNN model and the model fitting pipeeline
