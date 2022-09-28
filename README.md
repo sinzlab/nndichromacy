@@ -16,4 +16,4 @@ Visit this [repository](https://gin.g-node.org/cajal/Franke_Willeke_2022) for th
 
 ## See also
 
-See [Sensorium](https://github.com/sinzlab/sensorium) for demos and tutorials of the CNN model and the model fitting pipeeline
+See [Sensorium](https://github.com/sinzlab/sensorium) for demos and tutorials of the CNN model and the model fitting pipeline.
