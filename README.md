@@ -3,7 +3,7 @@
 ## Publication:
 Code base for the publication:
 [State-dependent pupil dilation rapidly shifts
-visual feature selectivity](https://www.nature.com/articles/s41586-022-05270-3https://www.nature.com/articles/s41586-022-05270-3) [Nature, 2022]
+visual feature selectivity](https://www.nature.com/articles/s41586-022-05270-3) [Nature, 2022]
 
 ![plot](./figures/Fig1.png)
 
@@ -12,7 +12,7 @@ A collaboration of the Neuronal Intelligence lab of Fabian Sinz, the Neural Circ
 
 
 ## Data
-Visit this [repository](https://www.nature.com/articles/s41586-022-05270-3https://www.nature.com/articles/s41586-022-05270-3) for the all datasets used in this study.
+Visit this [repository](https://gin.g-node.org/cajal/Franke_Willeke_2022) for the all datasets used in this study.
 
 ## See also
 
