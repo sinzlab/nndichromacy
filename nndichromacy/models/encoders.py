@@ -7,12 +7,13 @@ from torch.nn import functional as F
 
 
 class Encoder(nn.Module):
-    def __init__(self, core, readout, elu_offset, shifter=None):
+    def __init__(self, core, readout, final_nonlinearity, elu_offset, shifter=None):
         super().__init__()
         self.core = core
         self.readout = readout
         self.offset = elu_offset
         self.shifter = shifter
+        self.readout_nonlinearity = final_nonlinearity
 
     def forward(
         self, *args, data_key=None, eye_pos=None, shift=None, trial_idx=None, **kwargs
@@ -52,7 +53,10 @@ class Encoder(nn.Module):
             shift = self.shifter[data_key](eye_pos)
 
         x = self.readout(x, data_key=data_key, shift=shift, **kwargs)
-        return F.elu(x + self.offset) + 1
+        if self.readout_nonlinearity is True:
+            return F.elu(x + self.offset) + 1
+        else:
+            return x
 
     def regularizer(self, data_key):
         return self.core.regularizer() + self.readout.regularizer(data_key=data_key)
