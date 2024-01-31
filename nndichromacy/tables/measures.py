@@ -145,6 +145,153 @@ class AvgFiringRateTestBlueSet(MeasuresTable):
     dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb_blue_only")
 
 
+##### Center Surround Tables
+## Oracle Correlation ##
+
+
+@schema
+class OracleCorrCSCenter(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_oracles_corrected)
+    measure_dataset = "test"
+    measure_attribute = "oc_cs_center"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_center")
+
+@schema
+class OracleCorrCSSurr(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_oracles_corrected)
+    measure_dataset = "test"
+    measure_attribute = "oc_cs_surr"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_surround")
+
+@schema
+class OracleCorrCSCenterSurrMixed(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_oracles_corrected)
+    measure_dataset = "test"
+    measure_attribute = "oc_cs_center_surr_mixed"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_center_surround_mixed")
+
+@schema
+class OracleCorrCSCenterSurrMixedSel(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_oracles_corrected)
+    measure_dataset = "train"
+    measure_attribute = "oc_cs_center_surr_mixed"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_center_surround_mixed_selected")
+
+@schema
+class OracleCorrCSFull(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_oracles_corrected)
+    measure_dataset = "test"
+    measure_attribute = "oc_cs_full"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_full")
+
+@schema
+class OracleCorrCSOppCenterGreen(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_oracles_corrected)
+    measure_dataset = "test"
+    measure_attribute = "oc_opp_center_green"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_opponent_green_center")
+
+@schema
+class OracleCorrCSOppCenterUV(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_oracles_corrected)
+    measure_dataset = "test"
+    measure_attribute = "oc_opp_center_uv"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_opponent_uv_center")
+
+## Avg Firing ##
+
+@schema
+class AvgFireCSCenter(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_firing)
+    measure_dataset = "test"
+    measure_attribute = "af_cs_center"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_center")
+
+@schema
+class AvgFireCSSurr(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_firing)
+    measure_dataset = "test"
+    measure_attribute = "af_cs_surr"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_surround")
+
+@schema
+class AvgFireCSCenterSurrMixed(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_firing)
+    measure_dataset = "test"
+    measure_attribute = "af_cs_center_surr_mixed"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_center_surround_mixed")
+
+@schema
+class AvgFireCSCenterSurrMixedSel(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_firing)
+    measure_dataset = "train"
+    measure_attribute = "af_cs_center_surr_mixed"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_center_surround_mixed_selected")
+
+@schema
+class AvgFireCSFull(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_firing)
+    measure_dataset = "test"
+    measure_attribute = "af_cs_full"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_full")
+
+@schema
+class AvgFireCSOppCenterGreen(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_firing)
+    measure_dataset = "test"
+    measure_attribute = "af_opp_center_green"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_opponent_green_center")
+
+@schema
+class AvgFireCSOppCenterUV(MeasuresTable):
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_firing)
+    measure_dataset = "test"
+    measure_attribute = "af_opp_center_uv"
+    data_cache = DataCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_opponent_uv_center")
+
+
 ##### ============ Summary Scores ============ #####
 
 

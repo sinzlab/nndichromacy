@@ -6,6 +6,10 @@ from collections import Iterable
 from dataport.bcm.color_mei.schema import StaticImage
 from ..tables.utils import preprocess_img_for_reconstruction
 import numpy as np
+from ..tables.from_mei import MEI
+import os
+
+fetch_download_path = os.environ.get('FETCH_DOWNLOAD_PATH', '/data/fetched_from_attach')
 
 
 def cumstom_initial_guess(*args, mean=0, std=1, device="cuda"):
@@ -223,6 +227,51 @@ class RandomNormBehaviorPositionsAdaptivePupil(InitialGuessCreator):
     def __repr__(self):
         return f"{self.__class__.__qualname__}()"
 
+class RandomNormBehaviorPositionsSurr(InitialGuessCreator):
+    """Used to create an initial guess tensor filled with values distributed according to a normal distribution."""
+
+    _create_random_tensor = randn
+
+    def __init__(self, selected_channels, selected_values, key, mask_thres=0.3):
+        if not isinstance(selected_channels, Iterable) and (selected_channels is not None):
+            selected_channels = (selected_channels)
+
+        if not isinstance(selected_values, Iterable) and (selected_values is not None):
+            selected_values = (selected_values)
+
+        self.selected_channels = selected_channels
+        self.selected_values = selected_values
+        
+        src_method_fn = key["src_method_fn"]
+        unit_id = key["unit_id"]
+
+        inner_ensemble_hash = key["inner_ensemble_hash"]
+        inner_method_hash = key["inner_method_hash"]
+        unit_id = key["unit_id"]
+
+        inner_mei_path = (MEI & dict(method_fn=src_method_fn) & dict(ensemble_hash=inner_ensemble_hash) & dict(method_hash=inner_method_hash) & dict(unit_id=unit_id)).fetch1('mei', download_path=fetch_download_path)
+        
+        #outer_mei=torch.load(outer_mei_path)
+        inner_mei=torch.load(inner_mei_path)
+
+        self.center_mask= (inner_mei[0][-1] > mask_thres) * 1
+        #self.center_type = center_type
+        #self.center_norm = center_norm
+        self.centerimg = inner_mei[0][:2]
+        
+    def __call__(self, *shape):
+        """Creates a random initial guess from which to start the MEI optimization process given a shape."""
+
+        initial = self._create_random_tensor(*shape)
+        if self.selected_channels is not None:
+            for channel, value in zip(self.selected_channels, self.selected_values):
+                initial[:, channel, ...] = value
+        initial[:, -2:, ...] = torch.from_numpy(np.stack(np.meshgrid(np.linspace(-1, 1, shape[-1]), np.linspace(-1, 1, shape[-2]))))
+        initial[:,:2, ...] = self.centerimg + initial[:,:2,...] * (1-self.center_mask)
+        return initial
+
+    def __repr__(self):
+        return f"{self.__class__.__qualname__}()"
 
 class CustomRandomNormal(InitialGuessCreator):
     """Used to create an initial guess tensor filled with values distributed according to a normal distribution."""

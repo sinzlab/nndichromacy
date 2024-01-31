@@ -6,15 +6,21 @@ MAINTAINER Arne Nix <arnenix@gmail.com>
 %post
     # install third-party libraries
     git clone https://github.com/sinzlab/nnfabrik.git
-    git clone -b readout_position_regularizer https://github.com/KonstantinWilleke/neuralpredictors
-    git clone -b konsti_monkey_experiments https://github.com/sinzlab/mei
-    git clone https://github.com/KonstantinWilleke/data_port
-    git clone https://github.com/KonstantinWilleke/nndichromacy
-    python -m pip install -e ./nnfabrik
-    python -m pip install -e ./neuralpredictors
-    python -m pip install -e ./mei
-    python -m pip install -e ./data_port
-    python -m pip install -e ./nndichromacy
+    git clone -b transformer_readout https://github.com/KonstantinWilleke/neuralpredictors
+    git clone -b transparency_mei https://github.com/KonstantinWilleke/mei.git
+    git clone -b eye_link https://github.com/KonstantinWilleke/data_port
+    git clone -b slurm_dev https://github.com/KonstantinWilleke/nndichromacy
+    python3.8 -m pip install --no-use-pep517 -e ./nnfabrik
+    python3.8 -m pip install --no-use-pep517 -e ./neuralpredictors
+    python3.8 -m pip install --no-use-pep517 -e ./mei
+    python3.8 -m pip install --no-use-pep517 -e ./data_port
+    python3.8 -m pip install git+https://github.com/sacadena/ptrnets
+    python3.8 -m pip install git+https://github.com/dicarlolab/CORnet
+    python3.8 -m pip install --no-use-pep517 -e ./nndichromacy
+    python3.8 -m pip install einops
+    python3.8 -m pip install scikit-image==0.19.1
+    python3.8 -m pip install numpy==1.22.0
+
 
 %environment
     

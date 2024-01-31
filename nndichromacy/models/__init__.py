@@ -8,4 +8,5 @@ from .models import (
     rotation_equivariant_gauss_readout,
     augmented_full_readout,
     se_core_behavior_gauss,
+    se_core_center_surround,
 )

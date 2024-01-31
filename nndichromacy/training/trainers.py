@@ -41,6 +41,7 @@ def standart_trainer(
     cb=None,
     track_training=False,
     return_test_score=False,
+    use_early_stopping=True,
     **kwargs
 ):
     """
@@ -102,13 +103,22 @@ def standart_trainer(
     model.train()
 
     criterion = getattr(mlmeasures, loss_function)(avg=avg_loss)
-    stop_closure = partial(
-        getattr(measures, stop_function),
-        dataloaders=dataloaders["validation"],
-        device=device,
-        per_neuron=False,
-        avg=True,
-    )
+    if use_early_stopping:
+        stop_closure = partial(
+            getattr(measures, stop_function),
+            dataloaders=dataloaders["validation"],
+            device=device,
+            per_neuron=False,
+            avg=True,
+        )
+    else:
+        stop_closure = partial(
+            getattr(measures, stop_function),
+            dataloaders=dataloaders["train"],
+            device=device,
+            per_neuron=False,
+            avg=True,
+        )
 
     n_iterations = len(LongCycler(dataloaders["train"]))
 
@@ -130,7 +140,6 @@ def standart_trainer(
         if loss_accum_batch_n is None
         else loss_accum_batch_n
     )
-
     if track_training:
         tracker_dict = dict(
             correlation=partial(
@@ -139,14 +148,6 @@ def standart_trainer(
                 dataloaders=dataloaders["validation"],
                 device=device,
                 per_neuron=False,
-            ),
-            poisson_loss=partial(
-                get_poisson_loss,
-                model=model,
-                datalaoders=dataloaders["validation"],
-                device=device,
-                per_neuron=False,
-                avg=False,
             ),
         )
         if hasattr(model, "tracked_values"):

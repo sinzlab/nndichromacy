@@ -1,5 +1,4 @@
 import datajoint as dj
-
 from nnfabrik.main import Model, Dataset, Trainer, Seed, Fabrikant
 
 from ..utility.measures import (
@@ -21,7 +20,6 @@ from ..utility.measures import (
 )
 from .from_nnfabrik import TrainedModel, ScoringTable, SummaryScoringTable
 from .from_mei import MEISelector, TrainedEnsembleModel
-from .from_reconstruction import Reconstruction
 from . import DataCache, TrainedModelCache, EnsembleModelCache
 from nnfabrik.utility.dj_helpers import CustomSchema
 from .from_mei import MEIScore
@@ -73,6 +71,18 @@ class TestCorrelation(ScoringTable):
     unit_table = MEISelector
     measure_function = staticmethod(get_correlations)
     measure_dataset = "test"
+    measure_attribute = "test_correlation"
+    data_cache = DataCache
+    model_cache = TrainedModelCache
+
+
+@schema
+class TrainCorrelation(ScoringTable):
+    trainedmodel_table = TrainedModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_correlations)
+    measure_dataset = "train"
     measure_attribute = "test_correlation"
     data_cache = DataCache
     model_cache = TrainedModelCache
@@ -407,6 +417,94 @@ class CtAEnsembleGreenLow(ScoringTable):
     dataloader_function_kwargs = dict(image_condition="imagenet_v2_green_only_bckgr")
 
 
+#### Center Surround Test Sets
+
+@schema
+class CtAeCSCenter(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "ctae_cs_center"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_center")
+
+@schema
+class CtAeCSSurr(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "ctae_cs_surr"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_surround")
+
+@schema
+class CtAeCSCenterSurrMixed(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "ctae_cs_center_surr_mixed"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_center_surround_mixed")
+
+@schema
+class CtAeCSCenterSurrMixedSel(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "train"
+    measure_attribute = "ctae_cs_center_surr_mixed"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_center_surround_mixed_selected")
+
+@schema
+class CtAeCSFull(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "ctae_cs_full"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_full")
+
+@schema
+class CtAeCSOpponentCenterGreen(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "ctae_cs_opp_center_green"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_opponent_green_center")
+
+@schema
+class CtAeCSOpponentCenterUV(ScoringTable):
+    trainedmodel_table = TrainedEnsembleModel
+    dataset_table = Dataset
+    unit_table = MEISelector
+    measure_function = staticmethod(get_avg_correlations)
+    measure_dataset = "test"
+    measure_attribute = "ctae_cs_opp_center_uv"
+    data_cache = DataCache
+    model_cache = EnsembleModelCache
+    dataloader_function_kwargs = dict(image_condition="imagenet_color_opponent_uv_center")
+
+
+
 ##### ============ Summary Scores ============ #####
 
 
@@ -470,6 +568,7 @@ class FractionOracleJackknifeEnsembleGreenSet(SummaryScoringTable):
     dataloader_function_kwargs = dict(image_condition="imagenet_v2_rgb_green_only")
 
 
+
 @schema
 class MEINorm(MEIScore):
     measure_function = staticmethod(get_mei_norm)
@@ -497,19 +596,4 @@ class MEINormGreen(MEIScore):
 class MEIColorBias(MEIScore):
     measure_function = staticmethod(get_mei_color_bias)
     measure_attribute = "mei_color_bias"
-    external_download_path = fetch_download_path
-
-
-@schema
-class MEIMichelsonContrast(MEIScore):
-    measure_function = staticmethod(get_mei_michelson_contrast)
-    measure_attribute = "michelson_contrast"
-    external_download_path = fetch_download_path
-
-
-@schema
-class RecMichelsonContrast(MEIScore):
-    mei_table = Reconstruction
-    measure_function = staticmethod(get_mei_michelson_contrast)
-    measure_attribute = "michelson_contrast"
     external_download_path = fetch_download_path
