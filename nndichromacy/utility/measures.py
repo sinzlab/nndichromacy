@@ -57,12 +57,13 @@ def model_predictions_repeats(
                 with device_state(model, device) if not is_ensemble_function(
                     model
                 ) else contextlib.nullcontext():
-                    output.append(
-                        model(*batch, data_key=data_key, **batch._asdict())
-                        .detach()
-                        .cpu()
-                        .numpy()
-                    )
+                    with torch.no_grad():
+                        output.append(
+                            model(*batch, data_key=data_key, **batch._asdict())
+                            .detach()
+                            .cpu()
+                            .numpy()
+                        )
 
     # Forward unique images once
     if len(output) == 0:
@@ -72,9 +73,10 @@ def model_predictions_repeats(
             with device_state(model, device) if not is_ensemble_function(
                 model
             ) else contextlib.nullcontext():
-                output = (
-                    model(unique_images.to(device), data_key=data_key).detach().cpu()
-                )
+                with torch.no_grad():
+                    output = (
+                        model(unique_images.to(device), data_key=data_key).detach().cpu()
+                    )
 
             output = output.numpy()
 
