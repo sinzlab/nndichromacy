@@ -71,6 +71,29 @@ class MLPShifter(Shifter, ModuleDict):
         return self[data_key].regularizer() * self.gamma_shifter
 
 
+class TrialIDShifter(Shifter, ModuleDict):
+    def __init__(
+        self,
+        data_keys,
+        n_trials,
+        **kwargs
+    ):
+        super().__init__()
+
+        for k, n in zip(data_keys, n_trials):
+            self.add_module(
+                k, torch.nn.Embedding(n, 2),
+            )
+        self.initialize()
+
+    def initialize(self, **kwargs):
+        for v in self.values():
+            v.weight.data.uniform_(.05, .05)
+
+    def regularizer(self, data_key):
+        return 0
+
+
 class StaticAffine2dShifter(Shifter, ModuleDict):
     def __init__(self, data_keys, input_channels, bias=True, gamma_shifter=0, **kwargs):
         super().__init__()
