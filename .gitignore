@@ -9,7 +9,6 @@ secrets/
 .idea
 .cache
 .ipynb_checkpoints
-*.tar
 *.h5
 *.env
 *.pt

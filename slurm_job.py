@@ -72,9 +72,11 @@ singularity run \
 --no-home  \
 --bind $SCRATCH:/data/,/home/sinz/_shared/:/sinz_shared,$HOME/projects/:$HOME/projects/  \
 singularity_img.sif  \
-./run.py
+$HOME/projects/nnfabrik/nnvision/nnvision/run.py
         """
         return cmd_string
+
+
 
     @property
     def slurm_command(self):
