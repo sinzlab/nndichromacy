@@ -41,6 +41,7 @@ def standart_trainer(
     cb=None,
     track_training=False,
     return_test_score=False,
+    use_early_stopping=True,
     **kwargs
 ):
     """
@@ -102,13 +103,22 @@ def standart_trainer(
     model.train()
 
     criterion = getattr(mlmeasures, loss_function)(avg=avg_loss)
-    stop_closure = partial(
-        getattr(measures, stop_function),
-        dataloaders=dataloaders["validation"],
-        device=device,
-        per_neuron=False,
-        avg=True,
-    )
+    if use_early_stopping:
+        stop_closure = partial(
+            getattr(measures, stop_function),
+            dataloaders=dataloaders["validation"],
+            device=device,
+            per_neuron=False,
+            avg=True,
+        )
+    else:
+        stop_closure = partial(
+            getattr(measures, stop_function),
+            dataloaders=dataloaders["train"],
+            device=device,
+            per_neuron=False,
+            avg=True,
+        )
 
     n_iterations = len(LongCycler(dataloaders["train"]))
 
