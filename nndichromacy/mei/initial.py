@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from mei.initial import InitialGuessCreator
 import torch
 from torch import Tensor, randn
-from collections import Iterable
+from collections.abc import Iterable
 from dataport.bcm.color_mei.schema import StaticImage
 from ..tables.utils import preprocess_img_for_reconstruction
 import numpy as np

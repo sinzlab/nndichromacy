@@ -7,7 +7,8 @@ import numpy as np
 
 # from retina.retina import warp_image
 from skimage.transform import rescale
-from collections import namedtuple, Iterable
+from collections import namedtuple
+from collections.abc import Iterable
 import os
 from neuralpredictors.data.samplers import RepeatsBatchSampler
 import datajoint as dj
